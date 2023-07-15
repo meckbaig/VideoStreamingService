@@ -1,0 +1,32 @@
+﻿@using System.IO;
+@using VideoStreamingService.Models;
+@model Video;
+
+@{
+	ViewData["Title"] = "Редактор";
+}
+
+
+<div class="row">
+    <div class="col-xl-8 col-lg-8 col-md-12 mx-auto">
+        <partial name="_VideoDescription.cshtml" model= "@Model"/>
+    </div>
+</div>
+
+<script type="text/javascript">
+	window.onload = () => {
+        for (let i = 0; i < 3; i++) {
+            var name = "tn"+i;
+            var rb = document.getElementById(name);
+            var source = "\\Videos\\@Model.Id\\"+i+".jpg";
+            rb.setAttribute("src", source);
+            if (i == @Model.Thumbnail){
+                rb.checked = true;
+            }
+        }
+		
+            var video = document.getElementById('templateVideoPlayer'); 
+            video.setAttribute("src", "/api/FileApi/GetVideo?url=@Model.Id&quality=240")
+        
+	}
+</script>

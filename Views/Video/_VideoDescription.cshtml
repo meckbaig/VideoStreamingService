@@ -1,0 +1,75 @@
+﻿@model Video;
+
+<div class="row">
+    <div class="col-md-6 col-xxl-5">
+        <div class="display-3"></div>
+		<video id="templateVideoPlayer" controls="controls" muted>
+			<source id="videoSource" type="video/mp4" />
+        </video>
+        <div id="size"></div>
+		<div class="progress mb-4">
+            <div id="fileProgress" class="progress progress-striped active" style="height:44px;width:100%;" role="progressbar"
+                aria-valuemin="0" aria-valuemax="100">
+                    <div id="percentage" class="bar" style="height:44px;width:0%;background-color:green"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xxl-7">
+        <form asp-action="">
+            <div asp-validation-summary="ModelOnly"></div>
+            <div class="d-flex flex-row align-items-stretch mb-3">
+				<div class="form-floating me-2 flex-fill crop-text-1">
+                    <a class="form-control" style="font-size:15px" href="~/Video/watch?url=@Model?.Id" readonly>watch?url=@Model?.Id</a>
+                    <label asp-for="Title" class="form-label">Ссылка</label>
+                </div>
+				<div class="ms-1 flex-nowrap text-nowrap">
+                    <select class="form-select" asp-for="Visibility"
+                            asp-items="Html.GetEnumSelectList<VideoVisibilityEnum>()">
+                    </select>
+                </div>
+            </div>
+            <div class="mb-3 form-floating">
+				<input asp-for="Title" class="form-control" id="videoTitle" maxlength="100"/>
+				<label asp-for="Title" class="form-label">Название</label>
+            </div>
+            <div class="mb-3 form-floating">
+                <textarea asp-for="Description" class="form-control" maxlength="3000"
+                    id="videoDescription" style="height: 100px"></textarea>
+				<label asp-for="Description" class="form-label">Описание</label>
+            </div>
+			<div class="mb-3 row">
+                @for (int i = 0; i < 3; i++)
+                {
+                    <div class="col-4">
+                        
+                        <label class="position-relative" for="r@(i)">
+                            <img alt="#" class="img-fluid rounded-3" id="tn@(i)" src="/thumbnail.jpg" onerror="this.src='/thumbnail.jpg'">
+                            <input type="radio" class="form-check-input position-absolute top-0 start-0 m-1" id="r@(i)" asp-for="Thumbnail" value="@(i)">
+                        </label>
+                    </div>
+                }
+            </div>
+			<div class="m-0 p-0">
+				<input asp-for="Id" id="videoId" type="hidden">
+                <input asp-for="UserId" type="hidden">
+                <input asp-for="Uploaded" type="hidden">
+                <input asp-for="Resolution" type="hidden">
+                <input asp-for="Length" type="hidden">
+            </div>
+			<div class="mb-3">
+                <input class="btn btn-outline-success float-right" type="submit" value="Сохранить" formaction="SaveVideo" />
+                <input class="btn btn-outline-danger float-right" type="submit" value="Удалить" formaction="DeleteVideo">
+			</div>
+        </form>
+    </div>
+</div>
+
+@*@if(Model!=null){
+    <script type="text/javascript">
+        window.onload = () => {
+            var source = document.getElementById('videoSource'); // загрузить сюда потоковое видео
+            source.setAttribute("data-src", "/api/FileApi/GetVideo?url=@Model.Id&quality=240")
+
+        }
+    </script>
+}*@

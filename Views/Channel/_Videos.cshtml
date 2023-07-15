@@ -1,0 +1,67 @@
+﻿@using System.IO;
+@using VideoStreamingService.Data.ViewModels;
+@model FeedVM;
+
+
+<div class="row">
+    @foreach (var v in Model.Videos)
+    {
+        <div id="container_@v.Id" class="col-sm-6 col-md-4 col-lg-3 col-xl-3 col-xxl-2 align-content-center rounded mb-3">
+            <div class="position-relative to-hover">
+                <a href="~/Video/watch?url=@v.Id">
+                    <img id="@v.Id" class="rounded-3" src="~/Videos/@v.Id/@(v.Thumbnail).jpg" onerror="this.src='/thumbnail.jpg'" loading="lazy">
+                    <p class="badge position-absolute bottom-0 start-0 bg-dark text-wrap opacity-75" style="margin:6px">@v.Length</p>
+                    <p class="badge position-absolute bottom-0 end-0 bg-dark text-wrap opacity-75" style="margin:6px">@v.Resolution</p>
+
+                </a>
+                <a class="top-0 end-0 to-show position-absolute p-0" style="margin:6px;width:32px;height:32px" href="~/Video/Edit?url=@v.Id">
+                    @if (v.AllowEdit)
+                    {
+                        <div class="position-relative bg-dark opacity-75 rounded-circle w-100 h-100 m-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" fill="white" class="bi bi-pencil position-absolute top-50 start-50 translate-middle m-0" viewBox="0 0 16 16">
+                                <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"></path>
+                            </svg>
+                        </div>
+                    }
+                </a>
+            </div>
+            <ul class="list-unstyled mt-1">
+                <li>
+                    <a class="text-decoration-none text-reset" title="@v.Title" href="~/Video/watch?url=@v.Id">
+                        <div class="crop-text-2 fw-bold">@v.Title</div>
+                    </a>
+                </li>
+                <li>
+                    <div class="d-flex">
+                        <div style="font-size:15px">Просмотров: @v.ViewsCount</div>
+                        <div style="font-size:15px" class="ms-auto"
+						 title="@(v.UploadDate) @(v.Uploaded.ToString("t"))">
+                        @v.UploadDate
+                    </div>
+                    </div>
+                    
+                </li>
+            </ul>
+        </div>
+        if (v.Visibility == VideoVisibilityEnum.Hidden)
+        {
+            <script type="text/javascript">
+                var thumbnail = document.getElementById('@v.Id');
+                thumbnail.classList.add('border');
+                thumbnail.classList.add('border-3');
+                thumbnail.classList.add('border-danger');
+                var container = document.getElementById('container_@v.Id');
+                container.classList.add('opacity-50');
+            </script>
+        }
+        else if (v.Visibility == VideoVisibilityEnum.LinkAccess)
+        {
+            <script type="text/javascript">
+                var thumbnail = document.getElementById('@v.Id');
+                thumbnail.classList.add('border');
+                thumbnail.classList.add('border-3');
+                thumbnail.classList.add('border-warning');
+            </script>
+        }
+    }
+</div>

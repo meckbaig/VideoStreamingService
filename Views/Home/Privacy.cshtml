@@ -1,0 +1,14 @@
+﻿@{
+    ViewData["Title"] = "Privacy Policy";
+}
+<h1>@ViewData["Title"]</h1>
+
+<p>Use this page to detail your site's privacy policy.</p>
+
+<!-- Trigger buttons -->
+<button class="btn-dark" onclick="$(document.getElementById('alert')).toggleClass('fade show')"></button>
+<div id="alert" class="alert alert-warning alert-dismissible position-absolute fade end-0 top-0 m-3" role="alert">
+  <strong>Holy guacamole!</strong> You should check in on some of those fields below.
+    <button type="button" class="btn-close" onclick="$(document.getElementById('alert')).toggleClass('fade show')"></button>
+</div>
+

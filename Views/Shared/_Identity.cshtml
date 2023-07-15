@@ -1,0 +1,74 @@
+﻿@using VideoStreamingService.Data.Services
+@inject IUserService UserService;
+
+@if (!User.Identity.IsAuthenticated)
+{
+    <div class="form-group">
+        <a class="btn btn-outline-success float-right" asp-controller="User" asp-action="Login">Войти</a>
+    </div>
+}
+else
+{
+
+	@*User profile section*@
+	<div class="d-flex align-items-end flex-row flex-nowrap gap-2 mw-100">
+		<div class="mw-100">
+			<a class="btn btn-outline-primary text-nowrap crop-text-1" asp-controller="Video" asp-action="Upload">+ Добавить видео</a>
+		</div>
+		<div class="dropdown">
+			<button class="btn btn-outline-success dropdown-toggle crop-text-1 mw-100" type="button" data-bs-toggle="dropdown"
+				aria-expanded="false" aria-haspopup="true">
+				@UserService.NameByPrincipal(User)
+			</button>
+			<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profile-dropdown">
+				<li>
+					<form class="dropdown-item" action="/@User.Identity.Name" method="get">
+						<button class="dropdown-item text-center">
+							Мой канал
+						</button>
+					</form>
+				</li>
+				<li>
+					<form class="dropdown-item" asp-controller="User" asp-action="Edit">
+						<button class="dropdown-item text-center">
+							Настройки
+						</button>
+					</form>
+				</li>
+				<li>
+					<form class="dropdown-item" asp-controller="User" asp-action="Logout">
+						<button class="dropdown-item text-center">
+							Выйти
+						</button>
+					</form>
+				</li>
+				<li>
+					<a class="dropdown-item text-center" style="cursor: pointer">Тема</a>
+					<ul class="dropdown-menu dropdown-submenu dropdown-submenu-right">
+						<li>
+							<a class="dropdown-item text-center" style="cursor: pointer" onclick="changeTheme(event)" id="light">Светлая</a>
+						</li>
+						<li>
+							<a class="dropdown-item text-center" style="cursor: pointer" onclick="changeTheme(event)" id="dark">Тёмная</a>
+						</li>
+					</ul>
+				</li>
+			</ul>
+		</div>
+    </div>
+	<script type="text/javascript">
+			document.documentElement.setAttribute("data-bs-theme", "@(await UserService.GetTheme(User.Identity.Name))");
+		
+		function changeTheme(event) {
+			document.documentElement.setAttribute("data-bs-theme", event.currentTarget.id);
+			$.ajax({
+				url: "/User/SaveTheme/",
+				type: "POST",
+				data: JSON.stringify({ Url: "@User.Identity.Name", Theme: event.currentTarget.id }),
+				cache: false,
+				contentType: "application/json",
+				processData: false
+			})
+		};
+	</script>
+}

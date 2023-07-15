@@ -1,0 +1,178 @@
+﻿@using System.IO;
+@using System.Net.Http;
+@using VideoStreamingService.Data.ViewModels;
+@model Video;
+@{
+    ViewData["Title"] = "Добавление видео";
+}
+@*Модальное окно*@
+<div class="modal fade" id="staticUpload" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered" >
+        <div class="modal-content" style="height: 100%;">
+            <div class="modal-header">
+                <h5 class="modal-title" id="staticBackdropLabel">Выберите видеофайл</h5>
+                @*<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>*@
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <input name="file" id="file" type="file" accept="video/mp4,video/avi,.mkv" class="form-control"/>
+					<label for="formFile" class="col-form-label">Размер видеофайла не должен превышать 2ГБ</label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <input type="button" id="btnUpload" value="Загрузить" class="btn btn-success" />
+            </div>
+        </div>
+    </div>
+</div>
+
+@*Тело страницы*@
+<div class="row">
+    <div class="col-xl-8 col-lg-10 col-md-12 mx-auto">
+        <p>
+            <h4>Добавление видео</h4>
+        </p>
+        @if (TempData["Error"] != null)
+        {
+            <div class="col-md-12 alert alert-danger">
+                <span><b>Внимание!</b> - @TempData["Error"] </span>
+            </div>
+        }
+		<div id="videoDescription">
+
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+	window.onload = () => {
+		const myModal = new bootstrap.Modal('#staticUpload');
+		myModal.show();
+        $('#videoDescription').load("/Video/VideoDescriptionParial")
+        
+	}
+</script>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+<script type="text/javascript">
+    $("body").on("click", "#btnUpload", function () {
+        if ($("#file")[0].files[0].size > 2200000000) {
+            alert("Размер файла превышает 2ГБ!");
+            return null;
+        };
+        $('#staticUpload').modal('hide');
+        refreshPartial();
+        uploadVideo();        
+    });
+
+    function refreshPartial(){
+        var file = $("#file")[0].files[0];
+        var video = {
+            Id: "@Model.Id",
+            Title: file.name,
+            UserId: @Model.UserId,
+        }
+
+        $.ajax({
+            url: "/Video/VideoDescriptionParial",
+            type: "POST",
+            data: JSON.stringify(video),
+            cache: false,
+            contentType: "application/json",
+            processData: false,
+        }).done(function (res) {
+            $("#videoDescription").html(res);
+            showVideo();
+        });
+    }
+
+    function showVideo(){
+        $.ajax({
+            url: "/Video/ShowVideoInEditor",
+            type: "POST",
+            data: JSON.stringify({ Id: "@Model.Id" }),
+            cache: false,
+            contentType: "application/json",
+            processData: false,
+        }).done(function (source) {
+                        var video = document.getElementById('templateVideoPlayer'); 
+            video.setAttribute("src", "/api/FileApi/GetVideo?url=@Model.Id&quality=240")
+        });
+    }
+
+    function uploadVideo(){
+        var formData = new FormData();
+        //formData.append("fileName", $("#fileName").val());
+        var file = $("#file")[0].files[0];
+        formData.append("Id", "@Model.Id");
+        formData.append("file", file);
+        $.ajax({
+            type: 'POST',
+            url: '/api/FileApi/UploadFiles',
+            contentType: false,
+            processData: false,
+            data: formData,
+            success: function (ex) {
+                window.onbeforeunload = null;
+                for (let i = 0; i < 3; i++) {
+                    var name = "tn"+i;
+                    var rb = document.getElementById(name);
+                    var source = "\\Videos\\@Model.Id\\"+i+".jpg";
+                    rb.setAttribute("src", source);
+                    if (i == @Model.Thumbnail){
+                        rb.checked = true;
+                    }
+                }
+                convertVideo(ex);
+            },
+            xhr: function () {
+                var fileXhr = $.ajaxSettings.xhr();
+                if (fileXhr.upload) {
+                    $("progress").show();
+                    fileXhr.upload.addEventListener("progress", function (e) {
+                        if (e.lengthComputable) {
+                            onProgress(e.loaded, e.total);
+                        }
+                    }, false);
+                }
+                return fileXhr;
+            }
+        });
+        window.onbeforeunload = () => false
+    }
+
+    function convertVideo(ex) {
+        $.ajax({
+            url: "/Video/ConvertVideo",
+            type: "POST",
+            data: JSON.stringify({ Id: "@Model.Id", Ex: ex }),
+            cache: false,
+            contentType: "application/json",
+            processData: false,
+        })
+
+    }
+
+    //Upload bar progress update function
+    function onProgress(bytesUploaded, bytesTotal) {
+        var percentage = (bytesUploaded / bytesTotal * 100).toFixed(2);
+        $('#percentage').attr('aria-valuenow', percentage);
+        $('#percentage').css('width', percentage + '%');
+
+        $('#percentage').html(percentage + '%');
+
+        var uploadBytes = byteToSize(bytesUploaded);
+        var totalBytes = byteToSize(bytesTotal);
+
+        $('#size').html(uploadBytes + '/' + totalBytes);
+    }
+
+    //Convert bytes to byte, KB, MB, etc
+    function byteToSize(bytes, separator = '', postFix = '') {
+        if (bytes) {
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.min(parseInt(Math.floor(Math.log(bytes) / Math.log(1024)).toString(), 10), sizes.length - 1);
+            return `${(bytes / (1024 ** i)).toFixed(i ? 1 : 0)}${separator}${sizes[i]}${postFix}`;
+        }
+        return 'n/a';
+    }
+</script>

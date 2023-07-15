@@ -1,0 +1,62 @@
+html {
+  font-size: 14px;
+  position: relative;
+  min-height: 100%;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+textarea {
+    height: contain !important;
+    resize: none;
+}
+
+video {
+    width: 100% !important;
+    height: auto !important;
+    max-width: !important;
+}
+img {
+    width: 100% !important;
+    height: auto !important;
+}
+
+body {
+  margin-bottom: 60px;
+}
+
+.crop-text-1 {
+    -webkit-line-clamp: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+}
+.crop-text-2 {
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+}
+
+/*#dropSection {
+    height: 90%;
+    background-color: skyblue;
+}*/
+
+.to-show {
+    display: none;
+}
+
+.to-hover:hover > .to-show {
+    display: block;
+}
+
+.dropdown-menu > li:hover > .dropdown-submenu {
+    display: block;
+}

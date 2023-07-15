@@ -1,0 +1,141 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - VideoStreamingService</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/VideoStreamingService.styles.css" asp-append-version="true" />
+</head>
+<body>
+    <header id="header">
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm border-bottom box-shadow mb-3">
+            <div class="container-fluid">
+                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">VideoStreamingService</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                        </li>
+                        
+                    </ul>
+                </div>
+                <partial name="_Identity.cshtml" />
+            </div>
+        </nav>
+    </header>
+    <div class="container-fluid position-relative">
+        <main role="main" class="pb-3">
+            @RenderBody()
+            @if (TempData["Error"] != null)
+            {
+                <div id="alert" class="alert alert-danger position-absolute end-0 top-0 me-3 p-3" role="alert">
+                    <b>Внимание!</b> - @TempData["Error"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+			    </div>
+            }
+			
+        </main>
+    </div>
+
+    <footer class="border-top footer text-muted">
+        <div class="container">
+            &copy; 2023 - VideoStreamingService - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+        </div>
+    </footer>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/filedrop.js"></script>
+    <script type="text/javascript">
+        // Подсказки
+        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+        // Авторазмер у многострочного поля
+	    const tx = document.getElementsByTagName("textarea");
+	    for (let i = 0; i < tx.length; i++) {
+            tx[i].style.height = (tx[i].scrollHeight)+"px";
+            tx[i].style.overflow = "hidden";
+		    tx[i].addEventListener("input", OnInput, false);
+	    }
+	    function OnInput() {
+		    this.style.height = 0;
+		    this.style.height = (this.scrollHeight) + "px";
+	    }
+        // Наведение у всех картинок
+        const imgs = document.getElementsByTagName("img");
+        for (let i = 0; i < imgs.length; i++) {
+            if (imgs[i].classList.contains('preview')){
+                imgs[i].onmouseover = prevOver;
+                imgs[i].onmouseout = prevOut;
+            }
+                
+        }
+
+        async function prevOver(event){
+            var target = event.currentTarget;
+            target.setAttribute("data-src", target.src);
+            for (let i = 0; i<3; i++){
+                if (target.getAttribute("data-src")!=null){
+                    var source = target.getAttribute("data-src").slice(0, target.getAttribute("data-src").lastIndexOf('/'))+"/"+i+".jpg";
+                    target.setAttribute("src", source);
+                    await sleep(800);
+                    if(i==2)
+                        i=-1
+                }
+                else break;
+            }
+        }
+
+        function prevOut(event) {
+            var target = event.currentTarget;
+            target.setAttribute("src", target.getAttribute("data-src"));
+            target.removeAttribute("data-src");
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+        //// Отложеная загрузка (пока не работает)
+        //    document.addEventListener("DOMContentLoaded", function () {
+        //        var lazyloadImages = document.querySelectorAll("img.rounded.lazy");
+        //        var lazyloadThrottleTimeout;
+
+        //        function lazyload() {
+        //            if (lazyloadThrottleTimeout) {
+        //                clearTimeout(lazyloadThrottleTimeout);
+        //            }
+
+        //            lazyloadThrottleTimeout = setTimeout(function () {
+        //                var scrollTop = window.pageYOffset;
+        //                lazyloadImages.forEach(function (img) {
+        //                    if (img.offsetTop < (window.innerHeight + scrollTop)) {
+        //                        img.src = img.dataset.src;
+        //                        img.classList.remove('lazy');
+        //                    }
+        //                });
+        //                if (lazyloadImages.length == 0) {
+        //                    document.removeEventListener("scroll", lazyload);
+        //                    window.removeEventListener("resize", lazyload);
+        //                    window.removeEventListener("orientationChange", lazyload);
+        //                }
+        //            }, 20);
+        //        }
+        //        window.onload = () => { lazyload() };
+        //        document.addEventListener("scroll", lazyload);
+        //        window.addEventListener("resize", lazyload);
+        //        window.addEventListener("orientationChange", lazyload);
+        //    });
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
