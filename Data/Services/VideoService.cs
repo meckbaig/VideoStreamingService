@@ -28,7 +28,7 @@ namespace VideoStreamingService.Data.Services
 			{
 				for (int i = 0; i < 10; i++)
 				{
-					url += Statics.chars[new Random().Next(0, Statics.chars.Length)];
+					url += Statics.UrlChars[new Random().Next(0, Statics.UrlChars.Length)];
 				}
 				if (await VideoByIdAsync(url) == null)
 					unique = true;
@@ -37,7 +37,7 @@ namespace VideoStreamingService.Data.Services
 			}
 
 			video.Id = url;
-			User user = await _userService.FindByUrlUserAsync(principal.Identity.Name);
+			User user = await _userService.GetByUrlUserAsync(principal.Identity.Name);
 			video.UserId = user.Id;
 			return video;
 		}
@@ -61,7 +61,8 @@ namespace VideoStreamingService.Data.Services
 									prop.Name != "UserId" &&
 									prop.Name != "Uploaded" &&
 									prop.Name != "Resolution" &&
-									prop.Name != "Length")
+									prop.Name != "Length" &&
+									prop.Name != "Item")
 								{
 									_video[prop.Name] = video[prop.Name];
 								}
@@ -104,7 +105,7 @@ namespace VideoStreamingService.Data.Services
 
 		public async Task<bool> DeleteVideo(Video video)
 		{
-			var v = await VideoByIdAsync(video.Id);
+			var v = _context.Videos.FirstOrDefault(v => v.Id == video.Id);
 			try
 			{
 				Statics.TokenType tt = Statics.TokenType.Upload;
@@ -209,7 +210,7 @@ namespace VideoStreamingService.Data.Services
 
 		public async Task AddViewAsync(string id, ClaimsPrincipal principal)
 		{
-			User user = await _userService.FindByUrlUserAsync(principal.Identity.Name);
+			User user = await _userService.GetByUrlUserAsync(principal.Identity.Name);
 			Video video = await VideoByIdAsync(id);
 			View view = _context.Views.FirstOrDefault(v => v.UserId == user.Id && v.VideoId == video.Id);
 			if (view != null)
@@ -229,7 +230,7 @@ namespace VideoStreamingService.Data.Services
 
 		public async Task EditReaction(string videoId, string userUrl, bool reaction, bool doneUndone)
 		{
-			User user = await _userService.FindByUrlUserAsync(userUrl);
+			User user = await _userService.GetByUrlUserAsync(userUrl);
 			Reaction newReaction = _context.Reactions
 				.FirstOrDefault(r => r.VideoId == videoId && r.UserId == user.Id);
 			if (newReaction != null)
@@ -260,7 +261,7 @@ namespace VideoStreamingService.Data.Services
 
 		public async Task<bool?> GetReaction(Video video, string userUrl)
 		{
-			User user = await _userService.FindByUrlUserAsync(userUrl);
+			User user = await _userService.GetByUrlUserAsync(userUrl);
 			return video.Reactions.FirstOrDefault(r => r.UserId == user.Id)?.Like;
 		}
 	}

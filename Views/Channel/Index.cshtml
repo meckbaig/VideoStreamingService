@@ -8,19 +8,26 @@
 <div class="container-fluid my-4 mb-2">
     <div class="row">
 		<div class="col-sm-10 col-md-8 col-lg-6 col-xl-6 mx-auto">
+			<div class="d-flex align-items-center">
+				<img src="data:image/jpeg;base64,@Model.Image" class="rounded-circle p-3 p-md-0 my-0 my-md-3 me-2 me-md-4" style="aspect-ratio: 1/1;max-height:128px;max-width:128px">
+				<div>
+					<ul class="navbar-nav flex-row flex-wrap bd-navbar-nav">
+						<li class="nav-item col-auto me-3 mw-100">
+							<div class="h4 crop-text-1">@Model.Name</div>
+						</li>
+						<li class="nav-item col-auto">
+							@if (!Model.OwnChanel && !Model.Ignored)
+							{
+								<button id="subButton" onclick="changeSubscription()" class="btn btn-success mb-2" style="width:190px;">Подписаться</button>
+							}
+						</li>
+					</ul>
+					<p id="subCount" class="mb-2" title="@Model.LongSubsString()">@Model.SubsString()</p>
+
+				</div>
+				
+			</div>
 			
-			<ul class="navbar-nav flex-row flex-wrap bd-navbar-nav">
-				<li class="nav-item col-auto me-3 mw-100">
-					<div class="h4 crop-text-1">@Model.Name</div>
-				</li>
-				<li class="nav-item col-auto">
-					@if (!Model.OwnChanel && !Model.Ignored)
-					{
-						<button id="subButton" onclick="changeSubscription()" class="btn btn-success mb-2" style="width:190px;">Подписаться</button>
-					}
-				</li>
-			</ul>
-			<p id="subCount" class="mb-2">@(Model.Subscribers.Count) подписчиков</p>
 			@if (Model.OwnChanel)
 			{
 				<div class="d-flex mb-2" id="videoCheckboxes">
@@ -36,9 +43,9 @@
 			
         </div>
     </div>
-	
 
 	<div id="_videos" class="mt-2">
+		@await Html.PartialAsync("_Videos", Model.FeedVM)
 	</div>
 </div>
 
@@ -48,12 +55,12 @@
 	var enumsList = [];
 	if (@Model.Subed.ToString().ToLower()) {
 		subButtonToggle();
-	}
+	};
 
-	window.onload = () => {
-		$('#_videos').load("/GetVideos/@(Model.Url)" + enums)
+	//window.onload = () => {
+		//$('#_videos').load("" + enums)
 		//loadVideos();
-	}
+	//}
 
 
 	function changeSubscription() {
@@ -64,11 +71,22 @@
 			processData: false,
 			success: function (ex) {
 				var subCount = document.getElementById('subCount');
-				subCount.textContent = ex + " подписчиков"
+				subCount.textContent = ex + subsString(ex);
 			}
 		});
 		subButtonToggle();
-	}
+	};
+
+	function subsString(subsCount){
+		switch (subsCount%10) {
+			case 1: return " подписчик";
+			case 2: 
+			case 3: 
+			case 4: 
+				return " подписчика";
+			default: return " подписчиков"
+		};
+	};
 
 	function subButtonToggle() {
 		var subButton = document.getElementById('subButton');
@@ -101,8 +119,8 @@
 	<script type="text/javascript">
 		window.onload = () => {
 			loadEnumsList();
-			loadEnums();
-			$('#_videos').load("/GetVideos/@(Model.Url)" + enums)
+			@*loadEnums();*@
+			@*$('#_videos').load("/GetVideos/@(Model.Url)" + enums)*@
 		};
 
 		function loadVideos() {

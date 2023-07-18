@@ -1,12 +1,13 @@
 ﻿using System.Reflection;
+using VideoStreamingService.Data.ViewModels;
 
 namespace VideoStreamingService.Models
 {
 	public class FormattedVideo : Video
 	{
 		public new string Length { get; set; }
-		public long ViewsCount { get; set; }
-		public new string Resolution { get; set; }
+        public long ViewsCount { get; set; }
+        public new string Resolution { get; set; }
 		public bool AllowEdit { get; set; }
 		public string UploadDate { get; set; }
         public bool? Like { get; set; }
@@ -17,10 +18,14 @@ namespace VideoStreamingService.Models
 			{
 				try
 				{ 
-					if (prop.Name!=nameof(Length) && prop.Name != nameof(FormattedVideo.Resolution))
+					if (prop.Name!=nameof(Length) 
+						&& prop.Name != nameof(FormattedVideo.Resolution)
+						&& prop.Name != "Item")
                     this[prop.Name] = video[prop.Name]; 
 				}
-				catch (TargetParameterCountException) { }
+				catch (TargetParameterCountException) 
+				{
+				}
 			}
 
 			Length = TimeSpan.FromSeconds(video.Length).ToString("g");
@@ -30,6 +35,8 @@ namespace VideoStreamingService.Models
 				if (Length.StartsWith("0"))
 					Length = Length.Remove(0, 1);
 			}
+			if (Length == "0" && (Visibility == VideoVisibilityEnum.Visible || Visibility == VideoVisibilityEnum.LinkAccess))
+                Length = "В обработке";
 			ViewsCount = 0;
 			foreach (var view in video.Views)
 			{
@@ -53,5 +60,34 @@ namespace VideoStreamingService.Models
 			}
 			Resolution = $"{video.Resolution}p";
 		}
-	}
+
+		public string LongViewsString()
+		{
+			if (ViewsCount > 1000)
+				return Statics.LongDescription(ViewsCount, "просмотр");
+			return "";
+		}
+		public string LongSubsString()
+		{
+			long subs = User.Subscribers.Count;
+			if (subs > 1000)
+				return Statics.LongDescription(subs, "подписчик");
+			return "";
+		}
+
+		public string ViewsString()
+        {
+			if (ViewsCount > 1000)
+				return Statics.LongToShortString(ViewsCount) + " просмотров";
+			return Statics.LongDescription(ViewsCount, "просмотр");
+        }
+
+        public string SubsString()
+		{
+			long subs = User.Subscribers.Count;
+			if (subs > 1000)
+				return Statics.LongToShortString(subs) + " подписчиков";
+			return Statics.LongDescription(subs, "подписчик");
+        }
+    }
 }

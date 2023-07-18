@@ -29,7 +29,7 @@ namespace VideoStreamingService.Controllers
         {
             FeedVM feedVM = new FeedVM();
             List<Video> videos = await _videoService.GetVideosAsync(50, 1, true, new [] { VideoVisibilityEnum.Visible });
-            User curUser = await _userService.FindByUrlUserAsync(User.Identity.Name);
+            User curUser = await _userService.GetByUrlUserAsync(User.Identity.Name);
 
             foreach (Video video in videos)
             {

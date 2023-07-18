@@ -86,7 +86,7 @@ namespace VideoStreamingService.Controllers
                 resolutions.Add(480);
             if (video.Resolution >= 720)
                 resolutions.Add(720);
-            User curUser = await _userService.FindByUrlUserAsync(User.Identity.Name);
+            User curUser = await _userService.GetByUrlUserAsync(User.Identity.Name);
             VideoVM videoVM = new VideoVM()
             {
                 Video = new FormattedVideo(video, curUser),
@@ -171,6 +171,7 @@ namespace VideoStreamingService.Controllers
 
         public async Task<IActionResult> SaveVideo(Video video)
         {
+            video.Visibility = (VideoVisibilityEnum)video.VisibilityId;
             var cts = new CancellationTokenSource();
             cts.CancelAfter(TimeSpan.FromSeconds(10));
             video = await _videoProcessingService.AddVideoInfo(video, _appEnvironment.WebRootPath);

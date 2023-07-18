@@ -2,6 +2,7 @@
 using VideoStreamingService.Data.ViewModels;
 using VideoStreamingService.Data.Services;
 using VideoStreamingService.Models;
+using System;
 
 namespace VideoStreamingService.Controllers
 {
@@ -19,49 +20,52 @@ namespace VideoStreamingService.Controllers
         [Route("{url}")]
         public async Task<IActionResult> Index(string url)
 		{
-
+            if (url.Length < 5) return null;
 			ChannelVM channelVM = new ChannelVM(
-                await _userService.FindByUrlChannelAsync(url), 
-				await _userService.FindByUrlUserAsync(User.Identity.Name));
-
+                await _userService.FindByUrlChannelAsync(url),
+                await _userService.GetByUrlUserAsync(User.Identity.Name),
+                await _videoService.GetVideosAsync(Statics.VideosOnPage, 1, false, new []{ VideoVisibilityEnum.Visible }, url));
             return View(channelVM);
-		}
+        }
 
         [HttpPost]
-        [Route("Subscribe/{url}")]
-        public async Task<string> Subscribe(string url)
+        [Route("Subscribe/{url_sub}")]
+        public async Task<string> Subscribe(string url_sub)
         {
-            var url_sub = url.Split('_');
-            bool? sub = url_sub[1] == "True" ? null : true;
+            var url_sub_split = url_sub.Split('_');
+            string url = url_sub_split[0];
+            bool? sub = url_sub_split[1] == "True" ? null : true;
 
-            await _userService.ChangeSubscription(url_sub[0], User.Identity.Name, sub);
+            await _userService.ChangeSubscription(url, User.Identity.Name, sub);
 
-            User channel = await _userService.FindByUrlChannelAsync(url_sub[0]);
-            return $"{channel.Subscribers.Where(s => s.Sub_Ignore == true).Count()}";
+            User channel = await _userService.FindByUrlChannelAsync(url);
+            string subs = channel.Subscribers.Where(s => s.Sub_Ignore == true).Count().ToString();
+            return subs;
         }
 
         //[HttpPost]
-        [Route("GetVideos/{roles}")]
-        public async Task<IActionResult> GetVideos(string roles)
+        [Route("GetVideos/{url_roles}")]
+        public async Task<IActionResult> GetVideos(string url_roles)
         {
-            List<string> strings = roles.Split('_').ToList();
-            string url = strings[0];
-            strings.RemoveAt(0);
-            VideoVisibilityEnum[]? enums = new VideoVisibilityEnum[strings.Count];
-            for (int i = 0; i < strings.Count; i++)
+            List<string> roles_split = url_roles.Split('_').ToList();
+            string url = roles_split[0];
+            roles_split.RemoveAt(0);
+            VideoVisibilityEnum[]? enums = new VideoVisibilityEnum[roles_split.Count];
+            for (int i = 0; i < roles_split.Count; i++)
             {
-                enums[i] = (VideoVisibilityEnum)Enum.Parse(typeof(VideoVisibilityEnum), strings[i]);
+                enums[i] = (VideoVisibilityEnum)Enum.Parse(typeof(VideoVisibilityEnum), roles_split[i]);
             }
 
-            List<Video> videos = await _videoService.GetVideosAsync(50, 1, false, enums.Length == 0 ? null : enums, url);
+            List<Video> videos = await _videoService.GetVideosAsync(Statics.VideosOnPage, 1, false, enums.Length == 0 ? null : enums, url);
 
-			User curUser = await _userService.FindByUrlUserAsync(User.Identity.Name);
+			User curUser = await _userService.GetByUrlUserAsync(User.Identity.Name);
+
 			FeedVM feedVM = new FeedVM(){ };
-
             foreach (var v in videos)
             {
                 feedVM.Videos.Add(new FormattedVideo(v, curUser));
             }
+
             return PartialView("_Videos", feedVM);
         }
     }

@@ -22,7 +22,7 @@
 			<div class="col-sm-6 col-md-4 col-lg-3 col-xl-3 col-xxl-2 align-content-center mb-3">
 				<div class="position-relative to-hover">
 					<a href="~/Video/watch?url=@fv.Id">
-                        <img class="rounded-3 preview" src="~/Videos/@fv.Id/@(fv.Thumbnail).jpg" onerror="this.src='/thumbnail.jpg'" loading="lazy">
+                        <img class="rounded-3 preview" src="~/Videos/@fv.Id/@(fv.Thumbnail).jpg" style="aspect-ratio: 16/9;" onerror="this.src='/thumbnail.jpg'" loading="lazy">
                         <p class="badge position-absolute bottom-0 start-0 bg-dark text-wrap opacity-75" style="margin:6px">@fv.Length</p>
                         <p class="badge position-absolute bottom-0 end-0 bg-dark text-wrap opacity-75" style="margin:6px">@fv.Resolution</p>
                         
@@ -46,11 +46,11 @@
                         </a>
                     </li>
                     <li>
-						Автор: <a class="text-decoration-none text-reset" href="~/@fv.User.Url">
-                            @fv.User.Name
+                        <a class="text-decoration-none crop-text-1 text-reset" href="~/@fv.User.Url">
+							@fv.User.Name
                         </a> 
                     </li>
-                    <li>Просмотров: @fv.ViewsCount</li>
+                    <li title="@fv.LongViewsString()">@fv.ViewsString()</li>
 				</ul>
             </div>
         }

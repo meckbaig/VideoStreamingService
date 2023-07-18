@@ -1,7 +1,7 @@
 ﻿@model Video;
 
 <div class="row">
-    <div class="col-md-6 col-xxl-5">
+    <div class="col-md-5 col-xxl-4">
         <div class="display-3"></div>
 		<video id="templateVideoPlayer" controls="controls" muted>
 			<source id="videoSource" type="video/mp4" />
@@ -14,7 +14,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-6 col-xxl-7">
+    <div class="col-md-7 col-xxl-8">
         <form asp-action="">
             <div asp-validation-summary="ModelOnly"></div>
             <div class="d-flex flex-row align-items-stretch mb-3">
@@ -23,7 +23,7 @@
                     <label asp-for="Title" class="form-label">Ссылка</label>
                 </div>
 				<div class="ms-1 flex-nowrap text-nowrap">
-                    <select class="form-select" asp-for="Visibility"
+                    <select class="form-select" asp-for="VisibilityId"
                             asp-items="Html.GetEnumSelectList<VideoVisibilityEnum>()">
                     </select>
                 </div>
@@ -37,13 +37,23 @@
                     id="videoDescription" style="height: 100px"></textarea>
 				<label asp-for="Description" class="form-label">Описание</label>
             </div>
-			<div class="mb-3 row">
+            <div class="row mb-3 px-2">
+                <div class="col-3 px-1">
+                    <label class="position-relative" for="r3">
+                        <img class="img-fluid rounded-3" id="tn3" style="aspect-ratio: 16/9;" src="/Videos/@(Model?.Id)/3.jpg" onerror="this.src='/thumbnail.jpg'">
+                        <input type="radio" class="form-check-input position-absolute top-0 start-0 m-1" id="r3" asp-for="Thumbnail" value="3">
+						<div class="position-absolute bottom-0 start-50 translate-middle-x p-1 mb-2 opacity-75">
+                            <input type="file" id="uploadTnail" accept="image/*" onchange="uploadThumbnail(event)" hidden />
+							<label for="uploadTnail" class="btn btn-secondary">Загрузить</label>
+                        </div>
+                        
+                    </label>
+                </div>
                 @for (int i = 0; i < 3; i++)
                 {
-                    <div class="col-4">
-                        
-                        <label class="position-relative" for="r@(i)">
-                            <img alt="#" class="img-fluid rounded-3" id="tn@(i)" src="/thumbnail.jpg" onerror="this.src='/thumbnail.jpg'">
+                    <div class="col-3 px-1">
+						<label class="position-relative" for="r@(i)">
+                            <img class="img-fluid rounded-3" id="tn@(i)" style="aspect-ratio: 16/9;" src="/Videos/@Model?.Id/@(i).jpg" onerror="this.src='/thumbnail.jpg'">
                             <input type="radio" class="form-check-input position-absolute top-0 start-0 m-1" id="r@(i)" asp-for="Thumbnail" value="@(i)">
                         </label>
                     </div>
@@ -64,12 +74,26 @@
     </div>
 </div>
 
-@*@if(Model!=null){
-    <script type="text/javascript">
-        window.onload = () => {
-            var source = document.getElementById('videoSource'); // загрузить сюда потоковое видео
-            source.setAttribute("data-src", "/api/FileApi/GetVideo?url=@Model.Id&quality=240")
-
-        }
-    </script>
-}*@
+<script type="text/javascript">
+    function uploadThumbnail(event) {
+        var formData = new FormData();
+        var file = event.currentTarget.files[0];
+        formData.append("Id", "@Model?.Id");
+        formData.append("file", file);
+        $.ajax({
+            type: 'POST',
+            url: '/api/FileApi/UploadThumbnail',
+            contentType: false,
+            processData: false,
+            data: formData,
+            success: function (ok) {
+                if(ok){
+                    var tn = document.getElementById("tn3");
+                    tn.setAttribute("src", "\\Videos\\@Model?.Id\\3.jpg?" + Date.now());
+                    var rb = document.getElementById("r3");
+                    rb.checked = true;
+                }
+            }
+        });
+    };
+</script>

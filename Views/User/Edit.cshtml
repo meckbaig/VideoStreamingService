@@ -1,0 +1,65 @@
+﻿@using System.IO;
+@using VideoStreamingService.Data.ViewModels;
+@model EditUserVM;
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+	ViewData["Title"] = "Редактор";
+}
+
+
+<div class="row">
+	<div class="col-md-5 col-xxl-4 mx-auto">
+		<form method="post">
+			<div class="mb-3 p-2 d-flex gap-3 align-items-center">
+				<div class="d-flex">
+					<label for="uploadTnail" style="cursor: pointer">
+						<img src="data:image/jpeg;base64,@Model.Image" id="profilePicture" class="rounded-circle" style="aspect-ratio: 1/1;max-height:128px;max-width:128px;">
+						<input type="file" id="uploadTnail" accept="image/*" onchange="uploadImage(event)" hidden />
+                    </label>
+                </div>
+				<div>
+					<div class="form-floating mb-3">
+						<input asp-for="Name" class="form-control" />
+						<label asp-for="Name" class="form-label"></label>
+						<span asp-validation-for="Name" />
+					</div>
+					<div class="form-floating">
+						<input asp-for="Url" class="form-control" />
+						<label asp-for="Url" class="form-label"></label>
+						<span asp-validation-for="Url" />
+					</div>
+				</div>
+			</div>
+			<div class="m-0 p-0">
+				<input asp-for="Id" type="hidden">
+			</div>
+			<div class="m-2 gap-2">
+				<input class="btn btn-outline-success float-right" type="submit" value="Сохранить" formaction="Edit" />
+				<input class="btn btn-outline-danger float-right" type="submit" value="Удалить" formaction="DeleteUser">
+			</div>
+        </form>
+	</div>
+</div>
+
+<script type="text/javascript">
+    var profilePicture = document.getElementById("profilePicture");
+
+    function uploadImage(event) {
+        var formData = new FormData();
+        var file = event.currentTarget.files[0];
+        formData.append("file", file);
+        $.ajax({
+            type: 'POST',
+            url: '/api/FileApi/UploadImage',
+            contentType: false,
+            processData: false,
+            data: formData,
+            success: function (imageBase64) {
+                profilePicture.setAttribute("src", "data:image/jpeg;base64," + imageBase64)
+            }
+        });
+    };
+</script>
+<script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.5.1.min.js"></script>
+<script src="https://ajax.aspnetcdn.com/ajax/jquery.validate/1.17.0/jquery.validate.min.js"></script>
+<script src="https://ajax.aspnetcdn.com/ajax/jquery.validation.unobtrusive/3.2.10/jquery.validate.unobtrusive.min.js"></script>

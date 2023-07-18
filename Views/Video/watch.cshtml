@@ -13,19 +13,20 @@
 	<div class="col-md-12 col-xl-11 col-xxl-10 mx-auto">
 		@*<div class="row-12">*@
 			<div id="container" class="col-lg-8 col-md-12 mx-1">
-				<vm-player id="videoContainer" autoplay autopause="false">
-					<vm-video id="videoPlayer" cross-origin="true" poster="/Videos/@Model.Video.Id/@(Model.Video.Thumbnail).jpg">
+			<vm-player id="videoContainer" autoplay autopause="false">
+				<vm-video id="videoPlayer" cross-origin="true" poster="/Videos/@Model.Video.Id/@(Model.Video.Thumbnail).jpg">
 						<source id="videoSource" data-src='/api/FileApi/GetVideo?url=@(Model.Video.Id)' type="video/mp4" />
 					</vm-video>
 					<vm-ui>
 						<vm-scrim gradient="up"></vm-scrim>
 						<vm-click-to-play></vm-click-to-play>
+						<vm-dbl-click-fullscreen useOnMobile="true"></vm-dbl-click-fullscreen>
 						<vm-captions></vm-captions>
 						<vm-poster></vm-poster>
 						<vm-spinner></vm-spinner>
 						<vm-default-settings></vm-default-settings>
 						<vm-controls pin="bottomLeft" active-duration="2000" full-width>
-							<vm-control-group style="margin:5px;height:1em">
+							<vm-control-group style="margin-bottom:5px">
 								<vm-scrubber-control></vm-scrubber-control>
 							</vm-control-group>
 							<!--
@@ -33,15 +34,15 @@
 							  your own controls completely from scratch.
 							-->
 							<vm-control-group>
-								<vm-playback-control tooltip-direction="right"></vm-playback-control>
+								<vm-playback-control id="playback-control" tooltip-direction="right"></vm-playback-control>
 								<vm-volume-control></vm-volume-control>
 								<vm-time-progress></vm-time-progress>
 								<vm-control-spacer></vm-control-spacer>
 								<vm-caption-control></vm-caption-control>
 								@*<vm-control label="Wide screen" pressed="false" onclick="$(document.getElementById('videoContainer')).toggleClass('mx-auto col-8 col-12 mx-1')">*@
-								<vm-pip-control></vm-pip-control>
+								<vm-pip-control keys="p"></vm-pip-control>
 								<vm-settings-control></vm-settings-control>
-								<vm-control label="Wide screen" pressed="false" onclick="wideVideo()">
+								<vm-control label="Wide screen" keys="KeyW" pressed="false" onclick="wideVideo()">
 									<vm-icon src="/arrowsWide.svg"></vm-icon>
 									<vm-tooltip>Wide screen</vm-tooltip>
 								</vm-control>
@@ -77,7 +78,7 @@
 				<div class="d-flex mt-2 flex-nowrap">
 					<p class="h4">@Model.Video.Title</p>
 					<div class="d-flex flex-column ms-auto">
-						<p class="m-0 text-end text-body-secondary fw-medium text-nowrap">@Model.Video.ViewsCount просмотров</p>
+					<p class="m-0 text-end text-body-secondary fw-medium text-nowrap" title="@Model.Video.LongViewsString()">@Model.Video.ViewsString()</p>
 						<p class="m-0 text-end text-body-secondary text-nowrap"
 						   title="@(Model.Video.UploadDate) @(Model.Video.Uploaded.ToString("t"))">
 							@Model.Video.UploadDate</p>
@@ -86,12 +87,12 @@
 				<div class="d-flex align-items-center">
 					<div>
 						<a class="h4 text-decoration-none" href="~/@Model.Video.User.Url">@Model.Video.User.Name</a>
-						<p id="subCount" class="mb-2">@(Model.Video.User.Subscribers.Count) подписчиков</p>
+					<p id="subCount" class="mb-2" title="@Model.Video.LongSubsString()">@Model.Video.SubsString()</p>
 					</div>
 					<div class="ms-auto">
 						<input type="checkbox" class="btn-check" id="likeButton" value="1" autocomplete="off" onclick="reaction(event, 'dislikeButton')" >
 						<label class="btn btn-outline-primary" for="likeButton"
-							   data-bs-toggle="tooltip" data-bs-placement="bottom" title="@Model.Video.Reactions.Where(r=>r.Like=true).Count() лайков">
+							   data-bs-toggle="tooltip" data-bs-placement="bottom" title="@Model.Video.Reactions.Where(r=>r.Like==true).Count() лайков">
 							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-hand-thumbs-up-fill mb-1" viewBox="0 0 16 16">
 								<path d="M6.956 1.745C7.021.81 7.908.087 8.864.325l.261.066c.463.116.874.456 1.012.965.22.816.533 2.511.062 4.51a9.84 9.84 0 0 1 .443-.051c.713-.065 1.669-.072 2.516.21.518.173.994.681 1.2 1.273.184.532.16 1.162-.234 1.733.058.119.103.242.138.363.077.27.113.567.113.856 0 .289-.036.586-.113.856-.039.135-.09.273-.16.404.169.387.107.819-.003 1.148a3.163 3.163 0 0 1-.488.901c.054.152.076.312.076.465 0 .305-.089.625-.253.912C13.1 15.522 12.437 16 11.5 16H8c-.605 0-1.07-.081-1.466-.218a4.82 4.82 0 0 1-.97-.484l-.048-.03c-.504-.307-.999-.609-2.068-.722C2.682 14.464 2 13.846 2 13V9c0-.85.685-1.432 1.357-1.615.849-.232 1.574-.787 2.132-1.41.56-.627.914-1.28 1.039-1.639.199-.575.356-1.539.428-2.59z" />
 							</svg>
@@ -101,7 +102,7 @@
 					<div class="ms-2">
 						<input type="checkbox" class="btn-check" id="dislikeButton" value="0" autocomplete="off" onclick="reaction(event, 'likeButton')" >
 						<label class="btn btn-outline-danger" for="dislikeButton"
-							   data-bs-toggle="tooltip" data-bs-placement="bottom" title="@Model.Video.Reactions.Where(r=>r.Like=false).Count() дизлайков">
+							   data-bs-toggle="tooltip" data-bs-placement="bottom" title="@Model.Video.Reactions.Where(r=>r.Like==false).Count() дизлайков">
 							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-hand-thumbs-down-fill" viewBox="0 0 16 16">
 								<path d="M6.956 14.534c.065.936.952 1.659 1.908 1.42l.261-.065a1.378 1.378 0 0 0 1.012-.965c.22-.816.533-2.512.062-4.51.136.02.285.037.443.051.713.065 1.669.071 2.516-.211.518-.173.994-.68 1.2-1.272a1.896 1.896 0 0 0-.234-1.734c.058-.118.103-.242.138-.362.077-.27.113-.568.113-.856 0-.29-.036-.586-.113-.857a2.094 2.094 0 0 0-.16-.403c.169-.387.107-.82-.003-1.149a3.162 3.162 0 0 0-.488-.9c.054-.153.076-.313.076-.465a1.86 1.86 0 0 0-.253-.912C13.1.757 12.437.28 11.5.28H8c-.605 0-1.07.08-1.466.217a4.823 4.823 0 0 0-.97.485l-.048.029c-.504.308-.999.61-2.068.723C2.682 1.815 2 2.434 2 3.279v4c0 .851.685 1.433 1.357 1.616.849.232 1.574.787 2.132 1.41.56.626.914 1.28 1.039 1.638.199.575.356 1.54.428 2.591z" />
 							</svg>
@@ -138,15 +139,22 @@
 
 <script type="text/javascript">
 	var wideVideoBool = @TempData["WideVideo"].ToString().ToLower();
+	const container = document.getElementById('container');
+	const player = document.getElementById('videoContainer');
+	const submenuQuality = document.getElementById('submenuQuality');
+	const radioGroupQuality = document.getElementById('videoQuality');
+	const submenuSpeed = document.getElementById('submenuSpeed');
+	const radioGroupSpeed = document.getElementById('videoSpeed')
+	var time = player.currentTime;
 
-	window.onload = () => {
+
+	player.addEventListener('vmReady', event => {
 		countView();
 		if (wideVideoBool) {
 			wideVideo();
 		}
-			
-
-	};
+		resizeVideo();
+	});
 
 	window.onresize = () => {
 		resizeVideo();
@@ -230,29 +238,16 @@
 		})
 	}
 
-</script>
-<script>
-	const player = document.getElementById('videoContainer');
-	const submenuQuality = document.getElementById('submenuQuality');
-	const radioGroupQuality = document.getElementById('videoQuality');
-	const submenuSpeed = document.getElementById('submenuSpeed');
-	const radioGroupSpeed = document.getElementById('videoSpeed')
-	var time = player.currentTime;
 
-	//function checkQ(event) {
-	//	const radio = event.target;
-	//	submenuQuality.hint = radio.value;
-	//	var time = player.currentTime;
-	//	document.getElementById('videoPlayer').src = "/api/FileApi/GetVideo?url=@Model.Video.Id&quality=" + radio.value
-	//	player.currentTime = time;
-	//};
 
-	//function checkS(event){
-	//	const radio = event.target;
-	//	submenuSpeed.hint = radio.value;
-	//	player.playbackRate = radio.value;
-	//};
-	
+	//window.addEventListener('keydown', function (event) {
+	//	if (['Space'].includes(event.code)) {
+	//		var sdfsd = document.getElementById("playback-control");
+	//		var sdf = sdfsd.getElementsByTagName("vm-control");/*sdfsd.querySelector('[aria-label="Playback"]');*/
+
+	//		$(sdf).click()
+	//	}
+	//});
 
 
 	player.addEventListener('vmCurrentSrcChange', event => {
@@ -264,16 +259,9 @@
 	radioGroupQuality.addEventListener('vmCheck', event => {
 		const radio = event.target;
 		submenuQuality.hint = radio.value + "p";
-		//$.ajax({
-		//	url: "/api/FileApi/ChangeVideo",
-		//	type: "POST",
-  //          data: JSON.stringify({ Id: "@Model.Video.Id" }),
-  //          cache: false,
-  //          contentType: "application/json",
-  //          processData: false,
-		//})
+
 		time = player.currentTime;
-		const p = document.getElementsByTagName("vm-poster");
+		//const p = document.getElementsByTagName("vm-poster");
 		//for (let i = 0; i < p.length; i++) {
 		//	p[i].remove();
 		//}

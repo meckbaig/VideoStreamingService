@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics;
 using System.Security.Claims;
 using System.Text.Json;
 using VideoStreamingService.Data.Services;
@@ -21,13 +22,36 @@ namespace VideoStreamingService.Controllers
         }
 
         [HttpPost]
+        public async Task<string> GetUserName()
+        {
+            if (User.Identity.IsAuthenticated)
+            {
+                string name = _userService.NameByUrl(User.Identity.Name);
+                if (name != null)
+				    ViewData["UserName"] = name;
+                else
+			        await HttpContext.SignOutAsync();
+                return name;
+            }
+            return null;
+        }
+
         public async Task<IActionResult> Logout()
         {
-            await HttpContext.SignOutAsync();
+            string lp = Request.Headers["Referer"].ToString();
+
+            Response.Cookies.Append("LastPage", Request.Headers["Referer"].ToString());
+			await HttpContext.SignOutAsync();
             if (string.IsNullOrEmpty(Request.Cookies["LastPage"]))
                 return Redirect("/Home/Index");
-            return Redirect(Request.Cookies["LastPage"]);
+            return Redirect(lp);
         }
+
+  //      [HttpPost]
+  //      public async Task<IActionResult> Logout()
+		//{
+            
+  //      }
 
         public IActionResult Login()
         {
@@ -40,7 +64,7 @@ namespace VideoStreamingService.Controllers
         {
             if (!ModelState.IsValid) return View(logVM);
 
-            User user = await _userService.FindByEmailAsync(logVM.Email);
+            User user = await _userService.GetByEmailAsync(logVM.Email);
             if (user == null)
             {
                 TempData["Error"] = "Электронная почта не зарегистрирована";
@@ -59,7 +83,7 @@ namespace VideoStreamingService.Controllers
             };
             ClaimsIdentity claimsIdentity = new ClaimsIdentity(claims, "Cookies");
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity));
-
+            Response.Cookies.Append("UserName", user.Name);
             if (string.IsNullOrEmpty(Request.Cookies["LastPage"]))
                 return Redirect("/Home/Index");
             return Redirect(Request.Cookies["LastPage"]);
@@ -72,7 +96,7 @@ namespace VideoStreamingService.Controllers
         {
             if (!ModelState.IsValid) return View(regVM);
 
-            User user = await _userService.FindByEmailAsync(regVM.Email);
+            User user = await _userService.GetByEmailAsync(regVM.Email);
             if (user != null)
             {
                 TempData["Error"] = "Электронная почта уже используется";
@@ -83,8 +107,8 @@ namespace VideoStreamingService.Controllers
                 Email = regVM.Email,
                 Name = regVM.Name
             };
-            await _userService.CreateUser(newUser, regVM.Password);
-            user = await _userService.FindByEmailAsync(newUser.Email);
+            await _userService.CreateUserAsync(newUser, regVM.Password);
+            user = await _userService.GetByEmailAsync(newUser.Email);
 
             var claims = new List<Claim>
             {
@@ -93,12 +117,49 @@ namespace VideoStreamingService.Controllers
             ClaimsIdentity claimsIdentity = new ClaimsIdentity(claims, "Cookies");
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity));
 
-            return Redirect(Request.Cookies["LastPage"] ?? Request.Headers["Referer"].ToString());
+            if (string.IsNullOrEmpty(Request.Cookies["LastPage"]))
+                return Redirect("/Home/Index");
+            return Redirect(Request.Cookies["LastPage"]);
         }
 
-		public async Task<IActionResult> Edit() => View(await _userService.FindByUrlUserAsync(User.Identity.Name));
+        [HttpGet]
+        public async Task<IActionResult> Edit()
+        {
+            User user = await _userService.GetByUrlUserAsync(User.Identity.Name);
+            return View(new EditUserVM(user));
+        }
 
-		[HttpPost]
+        [HttpPost]
+        public async Task<IActionResult> Edit(EditUserVM editUserVM)
+        {
+            if (!ModelState.IsValid)
+                return View(editUserVM);
+            User user = await _userService.SaveUserAsync(editUserVM, new[] { "Name", "Url" });
+            await HttpContext.SignOutAsync();
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, user.Url),
+                new Claim(ClaimTypes.Role, user.Role.Name)
+            };
+            ClaimsIdentity claimsIdentity = new ClaimsIdentity(claims, "Cookies");
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity));
+
+
+
+            if (string.IsNullOrEmpty(Request.Cookies["LastPage"]))
+                return Redirect("/Home/Index");
+            return Redirect(Request.Cookies["LastPage"]);
+        }
+
+        public async Task<IActionResult> CheckUrl(string url)
+        {
+            User user = await _userService.GetByUrlUserAsync(url);
+            if (user != null && user.Url != User.Identity.Name)
+                return Json(false);
+            return Json(true);
+        }
+
+        [HttpPost]
         public async Task SaveTheme([FromBody] JsonDocument data)
 		{
 			string url = data.RootElement.GetProperty("Url").ToString();

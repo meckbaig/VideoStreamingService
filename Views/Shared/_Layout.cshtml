@@ -29,6 +29,8 @@
                         
                     </ul>
                 </div>
+                
+
                 <partial name="_Identity.cshtml" />
             </div>
         </nav>
@@ -43,7 +45,6 @@
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 			    </div>
             }
-			
         </main>
     </div>
 
@@ -81,25 +82,45 @@
                 
         }
 
-        async function prevOver(event){
-            var target = event.currentTarget;
-            target.setAttribute("data-src", target.src);
-            for (let i = 0; i<3; i++){
-                if (target.getAttribute("data-src")!=null){
-                    var source = target.getAttribute("data-src").slice(0, target.getAttribute("data-src").lastIndexOf('/'))+"/"+i+".jpg";
-                    target.setAttribute("src", source);
-                    await sleep(800);
-                    if(i==2)
-                        i=-1
+        $.ajax({
+        	type: "POST",
+            url: '/User/GetUserName',
+        	contentType: false,
+            success: function (ex) {
+                if (ex != null){
+                    document.getElementById("userButton").textContent = ex;
                 }
-                else break;
+            }
+        });
+
+        var funcId = 0;
+
+        async function prevOver(event) {
+            var target = event.currentTarget;
+            var id = funcId = Date.now();
+            if (target.getAttribute("data-src") == null && !target.src.includes("thumbnail")) {
+                target.setAttribute("data-src", target.src);
+                for (let i = 0; i<3; i++){
+                    if (target.getAttribute("data-src") != null && funcId == id) {
+                        var source = target.getAttribute("data-src").slice(0, target.getAttribute("data-src").lastIndexOf('/'))+"/"+i+".jpg";
+                        target.setAttribute("src", source);
+                        await sleep(800);
+                        if(i==2)
+                            i=-1
+                    }
+                    else break;
+                }
+            
             }
         }
 
         function prevOut(event) {
             var target = event.currentTarget;
-            target.setAttribute("src", target.getAttribute("data-src"));
-            target.removeAttribute("data-src");
+            if (target.getAttribute("data-src")!=null){
+                target.setAttribute("src", target.getAttribute("data-src"));
+                target.removeAttribute("data-src");
+            }
+            funcId = 0;
         }
 
         function sleep(ms) {

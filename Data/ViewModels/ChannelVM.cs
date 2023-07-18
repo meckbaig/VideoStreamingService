@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using System;
 using System.Reflection;
 using VideoStreamingService.Models;
 
@@ -9,8 +10,9 @@ namespace VideoStreamingService.Data.ViewModels
         public bool Subed { get; set; } = false;
         public bool Ignored { get; set; } = false;
 		public bool OwnChanel { get; set; } = false;
+		public FeedVM FeedVM { get; set; } = new FeedVM();
         //new public List<FormattedVideo> Videos { get; set; } = new List<FormattedVideo>();
-		public ChannelVM(User user, User curUser = null)
+		public ChannelVM(User user, User curUser, List<Video> videos)
 		{
 			foreach (var prop in user.GetType().GetProperties())
 			{
@@ -41,11 +43,33 @@ namespace VideoStreamingService.Data.ViewModels
 			}
             else
                 Ignored = true;
-        }
+
+			foreach (var v in videos)
+			{
+				FeedVM.Videos.Add(new FormattedVideo(v, curUser));
+			}
+
+
+		}
 
 		public ChannelVM()
 		{
 
+		}
+		public string LongSubsString()
+		{
+			long subs = Subscribers.Count;
+			if (subs > 1000)
+				return Statics.LongDescription(subs, "подписчик");
+			return "";
+		}
+
+		public string SubsString()
+		{
+			long subs = Subscribers.Count;
+			if (subs > 1000)
+				return Statics.LongToShortString(subs) + " подписчиков";
+			return Statics.LongDescription(subs, "подписчик");
 		}
 	}
 }

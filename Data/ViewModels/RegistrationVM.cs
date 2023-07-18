@@ -16,6 +16,7 @@ namespace VideoStreamingService.Data.ViewModels
         [Display(Name = "Пароль")]
         [Required(ErrorMessage = "Обязательно для заполнения")]
         [DataType(DataType.Password)]
+
         public string Password { get; set; }
         [Display(Name = "Подтверждение пароля")]
         [Required(ErrorMessage = "Обязательно для заполнения")]

@@ -9,7 +9,7 @@
         <div id="container_@v.Id" class="col-sm-6 col-md-4 col-lg-3 col-xl-3 col-xxl-2 align-content-center rounded mb-3">
             <div class="position-relative to-hover">
                 <a href="~/Video/watch?url=@v.Id">
-                    <img id="@v.Id" class="rounded-3" src="~/Videos/@v.Id/@(v.Thumbnail).jpg" onerror="this.src='/thumbnail.jpg'" loading="lazy">
+                    <img id="@v.Id" class="rounded-3 preview" style="aspect-ratio: 16/9;" src="~/Videos/@v.Id/@(v.Thumbnail).jpg" onerror="this.src='/thumbnail.jpg'" loading="lazy">
                     <p class="badge position-absolute bottom-0 start-0 bg-dark text-wrap opacity-75" style="margin:6px">@v.Length</p>
                     <p class="badge position-absolute bottom-0 end-0 bg-dark text-wrap opacity-75" style="margin:6px">@v.Resolution</p>
 
@@ -33,7 +33,7 @@
                 </li>
                 <li>
                     <div class="d-flex">
-                        <div style="font-size:15px">Просмотров: @v.ViewsCount</div>
+                        <div style="font-size:15px" title="@v.LongViewsString()">@v.ViewsString()</div>
                         <div style="font-size:15px" class="ms-auto"
 						 title="@(v.UploadDate) @(v.Uploaded.ToString("t"))">
                         @v.UploadDate
@@ -63,5 +63,6 @@
                 thumbnail.classList.add('border-warning');
             </script>
         }
+
     }
 </div>

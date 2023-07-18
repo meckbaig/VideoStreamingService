@@ -1,14 +1,14 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
-using VideoStreamingService.Models;
+using System.Diagnostics;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.IO;
+using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using System.Security.Claims;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication;
-using System;
-using System.Diagnostics;
 using VideoStreamingService.Data.ViewModels;
+using VideoStreamingService.Models;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace VideoStreamingService.Data.Services
 {
@@ -20,25 +20,25 @@ namespace VideoStreamingService.Data.Services
             _context = context;
         }
 
-        public string NameByPrincipal(ClaimsPrincipal principal)
+        public string NameByUrl(string url)
         {
             try
             {
                 User user = _context.Users.FirstOrDefault
-                    (u => u.Url == principal.Identity.Name);
+                    (u => u.Url == url);
                 return user?.Name;
             }
             catch (Exception)
             {
                 return null;
             }
-            
-		}
-        public async Task<User> FindByEmailAsync(string email)
-		{
-			return await _context.Users.Include(u => u.Role)
+        }
+
+        public async Task<User> GetByEmailAsync(string email)
+        {
+            return await _context.Users.Include(u => u.Role)
                 .FirstOrDefaultAsync(u => u.Email == email);
-		}
+        }
 
         public async Task<User> FindByUrlChannelAsync(string url)
         {
@@ -49,7 +49,7 @@ namespace VideoStreamingService.Data.Services
         }
 
 
-        public async Task<User> FindByUrlUserAsync(string url)
+        public async Task<User> GetByUrlUserAsync(string url)
         {
             return await _context.Users
                 .Include(u => u.Subscriptions)
@@ -57,51 +57,49 @@ namespace VideoStreamingService.Data.Services
                 .FirstOrDefaultAsync(u => u.Url == url);
         }
 
-        //public async Task ChangeSubscription(bool value, int id)
-        //{
-
-        //}
-
-        public async Task ChangeSubscription(string chUrl, string userUrl, bool? value = null)
+        public async Task ChangeSubscription(string channelUrl, string curUserUrl, bool? value = null)
         {
-            User channel = await FindByUrlChannelAsync(chUrl);
-            User curUser = await FindByUrlUserAsync(userUrl);
-            Subscription sub = curUser.Subscriptions?.FirstOrDefault(s => s.ToUserId == channel.Id);
-            if (sub != null)
+            User channel = await FindByUrlChannelAsync(channelUrl);
+            User curUser = await GetByUrlUserAsync(curUserUrl);
+            Subscription curSub = curUser.Subscriptions?.FirstOrDefault(s => s.ToUserId == channel.Id);
+            if (curSub != null) 
             {
                 if (value != null)
-                    sub.Sub_Ignore = (bool)value;
+                    curSub.Sub_Ignore = (bool)value;
                 else
-                    _context.Subscriptions.Remove(sub);
+                    _context.Subscriptions.Remove(curSub);
             }
             else
             {
-                sub = new Subscription() 
-                { 
+                curSub = new Subscription()
+                {
                     FromUserId = curUser.Id,
                     ToUserId = channel.Id,
                     Sub_Ignore = (bool)value
                 };
-                _context.Subscriptions.Add(sub);
+                _context.Subscriptions.Add(curSub);
             }
             _context.SaveChanges();
+
             StringBuilder dbgmsg = new StringBuilder($"Подписка {curUser.Name} на {channel.Name} изменена ({value})");
             dbgmsg.Replace("()", "(удалена)");
             Debug.WriteLine(dbgmsg.ToString());
         }
 
-        public async Task CreateUser(User user, string password)
+        public async Task CreateUserAsync(User user, string password)
         {
             user.Password = Hash(password);
             user.Role = _context.Roles.FirstOrDefault(r => r == RoleEnum.RegularUser);
+            user.Image = Statics.DefaultProfilePicture;
+
 			bool unique = false;
             while (!unique)
             {
-                for (int i = 0; i < 10; i++)
+                for (int i = 0; i < Statics.DefaultUrlLength; i++)
                 {
-                    user.Url += Statics.chars[new Random().Next(0, Statics.chars.Length)];
+                    user.Url += Statics.UrlChars[new Random().Next(0, Statics.UrlChars.Length)];
                 }
-                if (await FindByUrlUserAsync(user.Url) == null)
+                if (await GetByUrlUserAsync(user.Url) == null)
                     unique = true;
                 else
                     user.Url = "";
@@ -109,18 +107,38 @@ namespace VideoStreamingService.Data.Services
             await _context.AddAsync(user);
             await _context.SaveChangesAsync();
         }
-		public bool PasswordMatches(User user, string password)
-		{
+
+        public async Task<User> SaveUserAsync(EditUserVM user, string[] props)
+        {
+            try
+            {
+                User _user = _context.Users.Include(u => u.Role).FirstOrDefault(u => u.Id == user.Id);
+                foreach (var prop in props)
+                {
+                    _user[prop] = user[prop];
+                }
+                _context.SaveChanges();
+                Debug.Print($"{user.Name} saved");
+                return _user;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        public bool PasswordMatches(User user, string password)
+        {
             return Hash(password).Equals(user.Password);
-		}
+        }
 
         public async Task SaveTheme(string url, string theme)
         {
             _context.Users.FirstOrDefault(u => u.Url == url).Theme = theme;
             _context.SaveChanges();
-		}
+        }
 
-		public async Task<string> GetTheme(string url)
+        public async Task<string> GetTheme(string url)
         {
             return _context.Users.FirstOrDefault(u => u.Url == url)?.Theme;
         }
@@ -131,7 +149,23 @@ namespace VideoStreamingService.Data.Services
             _context.SaveChanges();
         }
 
-		private string Hash(string password)
+        public async Task<string> ChangeThumbnail(string url, IFormFile file)
+		{
+			await using var originalStream = new MemoryStream();
+			await using var squaredStream = new MemoryStream();
+			await file.CopyToAsync(originalStream);
+
+            Bitmap bitmap = new Bitmap(originalStream);
+            new Bitmap(bitmap, new Size(128, 128)).Save(squaredStream, ImageFormat.Jpeg);
+
+            byte[] byteImage = squaredStream.ToArray();
+            string imgBase64 = Convert.ToBase64String(byteImage);
+            _context.Users.FirstOrDefault(u => u.Url == url).Image = imgBase64;
+            _context.SaveChanges();
+            return imgBase64;
+        }
+
+        private string Hash(string password)
         {
             using (SHA512 sha512Hash = SHA512.Create())
             {

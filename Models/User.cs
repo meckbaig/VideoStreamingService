@@ -1,7 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using VideoStreamingService.Data.Base;
 using VideoStreamingService.Data;
-
+using Microsoft.AspNetCore.Mvc;
+    
 namespace VideoStreamingService.Models
 {
 	public class User : BasicClass, IEntityBase
@@ -10,12 +11,14 @@ namespace VideoStreamingService.Models
 		public int Id { get; set; }
         public string Url { get; set; }
         public string Name { get; set; }
-        public string Email { get; set; }
+
+        // [Remote(action: "CheckEmail", controller: "Home", ErrorMessage = "Email уже используется")] // полезное, можно заюзать
+        public string Email { get; set; }   
         public string Password { get; set; }
         public bool EmailConfirmed { get; set; } = false;
         public bool WideVideo { get; set; } = false;
         public string Theme { get; set; } = "light";
-        public string? Image { get; set; } // сделать....
+        public string? Image { get; set; } 
         public int RoleId { get; set; } = 1;
 
 

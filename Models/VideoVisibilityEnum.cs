@@ -12,6 +12,8 @@ namespace VideoStreamingService.Models
 		//[Display(Name = "Ограниченный доступ")]
 		//LimitedAccess = 3,
 		[Display(Name = "Закрытый доступ")]
-		Hidden = 4
-    }
+		Hidden = 4,
+		//[Display(Name = "Временно не доступно")]
+		//TemporarilyUnavailable = 5
+	}
 }
