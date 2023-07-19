@@ -1,4 +1,7 @@
-﻿@model ErrorViewModel
+﻿@using VideoStreamingService.Data.ViewModels;
+@model ErrorVM;
+if (!User.Identity.IsAuthenticated)
+    return Redirect("/Home/Index");
 @{
     ViewData["Title"] = "Error";
 }

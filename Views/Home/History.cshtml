@@ -1,0 +1,17 @@
+﻿@using VideoStreamingService.Data;
+@using static System.IO.Path;
+@using VideoStreamingService.Data.ViewModels;
+@using VideoStreamingService.Data.Services;
+@model FeedVM;
+@{
+    ViewData["Title"] = "История просмотра";
+}
+
+<div class="container-fluid my-4">
+    
+		@if (Model.Videos.Count == 0)
+		{
+		<h1 class="display-4 text-center">Вы пока не посмотрели ни одного видео</h1>
+		}
+    @await Html.PartialAsync("_Videos", Model)
+</div>

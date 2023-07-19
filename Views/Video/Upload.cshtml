@@ -68,7 +68,7 @@
         var file = $("#file")[0].files[0];
         var video = {
             Id: "@Model.Id",
-            Title: file.name,
+            Title: file.name.slice(0, file.name.lastIndexOf('.')),
             UserId: @Model.UserId,
         }
 
@@ -81,6 +81,7 @@
             processData: false,
         }).done(function (res) {
             $("#videoDescription").html(res);
+            refreshTextareaInput();
             showVideo();
         });
     }
@@ -94,7 +95,7 @@
             contentType: "application/json",
             processData: false,
         }).done(function (source) {
-                        var video = document.getElementById('templateVideoPlayer'); 
+            var video = document.getElementById('templateVideoPlayer'); 
             video.setAttribute("src", "/api/FileApi/GetVideo?url=@Model.Id&quality=240")
         });
     }

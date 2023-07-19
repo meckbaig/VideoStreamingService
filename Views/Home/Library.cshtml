@@ -1,0 +1,56 @@
+﻿@using VideoStreamingService.Data;
+@using static System.IO.Path;
+@using VideoStreamingService.Data.ViewModels;
+@using VideoStreamingService.Data.Services;
+@model FeedVM;
+@{
+    ViewData["Title"] = "Библиотека";
+}
+
+<div id="message" class="text-center">
+	@if (Model.Videos.Count == 0)
+	{
+		<h1 class="display-4">За текущие сутки новых видео нет</h1>
+		<a>Подпишитесь на большее количество каналов, чтобы смотреть новые видео каждый день</a>
+	}
+</div>
+
+<div id="videosContainer" class="container-fluid my-4">
+	@if (Model.Videos.Count != 0)
+	{
+		<p class="h3 mb-3">Сутки</p>
+	}
+	@await Html.PartialAsync("_Videos", Model)
+</div>
+<button id="buttonNext" class="btn btn-secondary mx-2 px-5 align-self-center" onclick="loadMore(event)">Далее</button>
+
+
+
+<script type="text/javascript">
+	var daysDescription = ["Сутки", "Неделя", "Месяц", "2 месяца", "3 месяца", "4 месяца", "5 месяцев", "Пол года"]
+	var days = [0, 1, 7, 30, 60, 90, 120, 150, 180];
+	var i = 1;
+
+
+	function loadMore(event){
+		if(i>=days.length-2){
+			event.currentTarget.parentNode.removeChild(event.currentTarget);
+		};
+		$.ajax({
+			type: 'POST',
+			url: "/Home/AppendToLibray",
+			data: JSON.stringify({ daysSkip: days[i++], daysTake: days[i] }),
+			cache: false,
+			contentType: "application/json",
+			processData: false,
+			success: function (result) {
+				$("#videosContainer").append('<p class="h3 mb-3">' + daysDescription[i-1] + '</p>');
+				$("#videosContainer").append(result);
+				if (document.getElementById("message") != null){
+					document.getElementById("message").parentNode.removeChild(document.getElementById("message"));
+				}
+				refreshPrevOver();
+			}
+        });
+	}
+</script>

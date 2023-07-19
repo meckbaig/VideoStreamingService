@@ -10,9 +10,9 @@
 	<script defer type="module" src="~/vime/dist/vime/vime.esm.js"></script>
 
 <div class="row">
-	<div class="col-md-12 col-xl-11 col-xxl-10 mx-auto">
+	<div class="d-flex flex-column align-items-center">
 		@*<div class="row-12">*@
-			<div id="container" class="col-lg-8 col-md-12 mx-1">
+		<div id="container" class="col-12 col-md-10 col-lg-9 col-xl-8">
 			<vm-player id="videoContainer" autoplay autopause="false">
 				<vm-video id="videoPlayer" cross-origin="true" poster="/Videos/@Model.Video.Id/@(Model.Video.Thumbnail).jpg">
 						<source id="videoSource" data-src='/api/FileApi/GetVideo?url=@(Model.Video.Id)' type="video/mp4" />
@@ -50,7 +50,7 @@
 							</vm-control-group>
 						</vm-controls>
 						<vm-settings>
-							<vm-submenu label="Качество" id="submenuQuality" hint="@(Model.Video.Resolution)">
+							<vm-submenu label="Качество" id="submenuQuality" hint="@(Model.Video.ResolutionString)">
 								<vm-menu-radio-group value="@Model.Resolutions[0]" id="videoQuality">
 									@{
 										foreach (int res in Model.Resolutions)
@@ -80,8 +80,8 @@
 					<div class="d-flex flex-column ms-auto">
 					<p class="m-0 text-end text-body-secondary fw-medium text-nowrap" title="@Model.Video.LongViewsString()">@Model.Video.ViewsString()</p>
 						<p class="m-0 text-end text-body-secondary text-nowrap"
-						   title="@(Model.Video.UploadDate) @(Model.Video.Uploaded.ToString("t"))">
-							@Model.Video.UploadDate</p>
+						   title="@(Model.Video.UploadDateString) @(Model.Video.Uploaded.ToString("t"))">
+							@Model.Video.UploadDateString</p>
 					</div>
 				</div>
 				<div class="d-flex align-items-center">
@@ -152,6 +152,7 @@
 		countView();
 		if (wideVideoBool) {
 			wideVideo();
+			wideVideoBool = !wideVideoBool;
 		}
 		resizeVideo();
 	});
@@ -199,9 +200,9 @@
 	}
 
 	function wideVideo(){
-		$(document.getElementById('container')).toggleClass('mx-auto col-lg-8 col-lg-12 mx-1');
-		resizeVideo(); 
+		$(document.getElementById('container')).toggleClass('col-xl-8 col-lg-9 col-md-10 w-100');
 		wideVideoBool = !wideVideoBool;
+		resizeVideo(); 
 		//$.ajax({
 		//	type: "POST",
 		//	url: '/Video/SetTempData',
@@ -214,10 +215,16 @@
 
 
 	function resizeVideo() {
-		var vidHeight = window.innerHeight * 0.9 - document.getElementById('header').offsetHeight - 130;
-		if (window.innerHeight < 600){
-			vidHeight = window.innerHeight - 15 - document.getElementById('header');
+		if (wideVideoBool) {
+			var vidHeight = window.innerHeight - document.getElementById('header').offsetHeight - 28;
 		}
+		else{
+			var vidHeight = window.innerHeight * 0.9 - document.getElementById('header').offsetHeight - 130;
+			if (window.innerHeight < 600){
+				vidHeight = window.innerHeight - 20 - document.getElementById('header');
+			}
+		}
+		
 		//document.getElementById('videoPlayer').style.maxHeight = vidHeight + "px";
 		var videoContainer = document.getElementById('videoContainer');
 		var ar = videoContainer.aspectRatio;

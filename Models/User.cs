@@ -19,7 +19,7 @@ namespace VideoStreamingService.Models
         public bool WideVideo { get; set; } = false;
         public string Theme { get; set; } = "light";
         public string? Image { get; set; } 
-        public int RoleId { get; set; } = 1;
+        public int RoleId { get; set; } = (int)RoleEnum.RegularUser;
 
 
         public Role Role { get; set; } = new Role();

@@ -13,8 +13,10 @@ namespace VideoStreamingService.Data.ViewModels
         [StringLength(40, MinimumLength = 5, 
             ErrorMessage = "Длина строки должна быть от 5 до 40 символов")]
         [Remote(action: "CheckUrl", controller: "User", 
-            ErrorMessage = "Данный идентификатор занят другим пользователем")] 
-        public string Url { get; set; }
+            ErrorMessage = "Данный идентификатор занят другим пользователем")]
+		[RegularExpression(@"^[a-zA-Z0-9_-]{5,40}$",
+		    ErrorMessage = "Используйте латиницу, числа, символы тире и нижнего подчёркивания ")]
+		public string Url { get; set; }
 
         [Display(Name = "Имя пользователя")]
         [Required(ErrorMessage = "Не указано имя пользователя")]

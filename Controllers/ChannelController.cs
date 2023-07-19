@@ -21,9 +21,9 @@ namespace VideoStreamingService.Controllers
         public async Task<IActionResult> Index(string url)
 		{
             if (url.Length < 5) return null;
-			ChannelVM channelVM = new ChannelVM(
-                await _userService.FindByUrlChannelAsync(url),
-                await _userService.GetByUrlUserAsync(User.Identity.Name),
+			UserChannel channelVM = new UserChannel(
+                await _userService.GetChannelByUrlAsync(url),
+                await _userService.GetUserByUrlAsync(User.Identity.Name),
                 await _videoService.GetVideosAsync(Statics.VideosOnPage, 1, false, new []{ VideoVisibilityEnum.Visible }, url));
             return View(channelVM);
         }
@@ -38,7 +38,7 @@ namespace VideoStreamingService.Controllers
 
             await _userService.ChangeSubscription(url, User.Identity.Name, sub);
 
-            User channel = await _userService.FindByUrlChannelAsync(url);
+            User channel = await _userService.GetChannelByUrlAsync(url);
             string subs = channel.Subscribers.Where(s => s.Sub_Ignore == true).Count().ToString();
             return subs;
         }
@@ -58,9 +58,9 @@ namespace VideoStreamingService.Controllers
 
             List<Video> videos = await _videoService.GetVideosAsync(Statics.VideosOnPage, 1, false, enums.Length == 0 ? null : enums, url);
 
-			User curUser = await _userService.GetByUrlUserAsync(User.Identity.Name);
+			User curUser = await _userService.GetUserByUrlAsync(User.Identity.Name);
 
-			FeedVM feedVM = new FeedVM(){ };
+			FeedVM feedVM = new FeedVM(){ FeedType = Statics.FeedTypeEnum.Channel };
             foreach (var v in videos)
             {
                 feedVM.Videos.Add(new FormattedVideo(v, curUser));

@@ -1,6 +1,6 @@
-namespace VideoStreamingService.Models
+namespace VideoStreamingService.Data.ViewModels
 {
-    public class ErrorViewModel
+    public class ErrorVM
     {
         public string? RequestId { get; set; }
 

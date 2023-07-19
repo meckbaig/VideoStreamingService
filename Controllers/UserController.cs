@@ -47,12 +47,6 @@ namespace VideoStreamingService.Controllers
             return Redirect(lp);
         }
 
-  //      [HttpPost]
-  //      public async Task<IActionResult> Logout()
-		//{
-            
-  //      }
-
         public IActionResult Login()
         {
             Response.Cookies.Append("LastPage", Request.Headers["Referer"].ToString());
@@ -64,7 +58,7 @@ namespace VideoStreamingService.Controllers
         {
             if (!ModelState.IsValid) return View(logVM);
 
-            User user = await _userService.GetByEmailAsync(logVM.Email);
+            User user = await _userService.GetUserByEmailAsync(logVM.Email);
             if (user == null)
             {
                 TempData["Error"] = "Электронная почта не зарегистрирована";
@@ -84,6 +78,7 @@ namespace VideoStreamingService.Controllers
             ClaimsIdentity claimsIdentity = new ClaimsIdentity(claims, "Cookies");
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity));
             Response.Cookies.Append("UserName", user.Name);
+            Response.Cookies.Append("Theme", user.Theme);
             if (string.IsNullOrEmpty(Request.Cookies["LastPage"]))
                 return Redirect("/Home/Index");
             return Redirect(Request.Cookies["LastPage"]);
@@ -96,7 +91,7 @@ namespace VideoStreamingService.Controllers
         {
             if (!ModelState.IsValid) return View(regVM);
 
-            User user = await _userService.GetByEmailAsync(regVM.Email);
+            User user = await _userService.GetUserByEmailAsync(regVM.Email);
             if (user != null)
             {
                 TempData["Error"] = "Электронная почта уже используется";
@@ -108,7 +103,7 @@ namespace VideoStreamingService.Controllers
                 Name = regVM.Name
             };
             await _userService.CreateUserAsync(newUser, regVM.Password);
-            user = await _userService.GetByEmailAsync(newUser.Email);
+            user = await _userService.GetUserByEmailAsync(newUser.Email);
 
             var claims = new List<Claim>
             {
@@ -125,7 +120,7 @@ namespace VideoStreamingService.Controllers
         [HttpGet]
         public async Task<IActionResult> Edit()
         {
-            User user = await _userService.GetByUrlUserAsync(User.Identity.Name);
+            User user = await _userService.GetUserByUrlAsync(User.Identity.Name);
             return View(new EditUserVM(user));
         }
 
@@ -153,7 +148,7 @@ namespace VideoStreamingService.Controllers
 
         public async Task<IActionResult> CheckUrl(string url)
         {
-            User user = await _userService.GetByUrlUserAsync(url);
+            User user = await _userService.GetUserByUrlAsync(url);
             if (user != null && user.Url != User.Identity.Name)
                 return Json(false);
             return Json(true);
@@ -165,6 +160,7 @@ namespace VideoStreamingService.Controllers
 			string url = data.RootElement.GetProperty("Url").ToString();
 			string theme = data.RootElement.GetProperty("Theme").ToString();
             await _userService.SaveTheme(url, theme);
-		}
+            Response.Cookies.Append("Theme", theme);
+        }
 	}
 }

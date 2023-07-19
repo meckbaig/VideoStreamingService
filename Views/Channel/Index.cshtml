@@ -1,6 +1,6 @@
 ﻿@using VideoStreamingService.Data.ViewModels;
 
-@model ChannelVM;
+@model UserChannel;
 @{
     ViewData["Title"] = Model.Name;
 }
@@ -69,9 +69,12 @@
 			url: subUrl,
 			contentType: false,
 			processData: false,
-			success: function (ex) {
-				var subCount = document.getElementById('subCount');
-				subCount.textContent = ex + subsString(ex);
+			success: function (subsCount) {
+				if (subsCount<1000){
+					var subCount = document.getElementById('subCount');
+					subCount.textContent = subsCount + subsString(subsCount);
+				}
+				
 			}
 		});
 		subButtonToggle();
@@ -90,7 +93,6 @@
 
 	function subButtonToggle() {
 		var subButton = document.getElementById('subButton');
-		var subAction = document.getElementById('subAction');
 		subButton.classList.toggle("btn-success");
 		subButton.classList.toggle("btn-outline-secondary");
 		if (subButton.textContent == 'Подписаться') {

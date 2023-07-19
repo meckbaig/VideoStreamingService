@@ -40,12 +40,12 @@ namespace VideoStreamingService.Data.Services
 
         private async Task AddResolutions(string input, string path, IMediaInfo mediaInfo, int height, CancellationToken ct)
         {
-            await AddResolution(mediaInfo, VideoCodec.h264_nvenc, VideoSize.Fwqvga, 204800L, 20, Path.Combine(path, "240.mp4"), ct);
+            await AddResolution(mediaInfo, VideoCodec.h264_nvenc, VideoSize.Fwqvga, 65536L, 20, Path.Combine(path, "240.mp4"), ct);
             File.Create(path + "\\240done").Close();
             if (height >= 480)
-                await AddResolution(mediaInfo, VideoCodec.h264_nvenc, VideoSize.Hd480, 819200L, 30, Path.Combine(path, "480.mp4"), ct);
+                await AddResolution(mediaInfo, VideoCodec.h264_nvenc, VideoSize.Hd480, 393216L, 30, Path.Combine(path, "480.mp4"), ct);
             if (height >= 720)
-                await AddResolution(mediaInfo, VideoCodec.h264_nvenc, VideoSize.Hd720, 3670016L, 60, Path.Combine(path, "720.mp4"), ct);
+                await AddResolution(mediaInfo, VideoCodec.h264_nvenc, VideoSize.Hd720, 1572864L, 60, Path.Combine(path, "720.mp4"), ct);
             File.Delete(input);
         }
 
@@ -65,7 +65,7 @@ namespace VideoStreamingService.Data.Services
 
                     if (vStream.Framerate < framerate)
                     {
-                        bitrate *= (long)(vStream.Framerate / framerate);
+                        bitrate = Convert.ToInt64(bitrate*(vStream.Framerate / framerate));
                         framerate = vStream.Framerate;
                     }
 

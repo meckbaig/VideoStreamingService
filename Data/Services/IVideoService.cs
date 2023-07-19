@@ -1,6 +1,7 @@
 ﻿using System.Security.Claims;
 using System.Text.Json;
 using VideoStreamingService.Data.Base;
+using VideoStreamingService.Data.ViewModels;
 using VideoStreamingService.Models;
 using Xabe.FFmpeg;
 
@@ -14,8 +15,9 @@ namespace VideoStreamingService.Data.Services
         Task<bool> DeleteVideo(Video video);
         Task DeleteDirectory(string path);
         Task<List<Video>> GetVideosAsync(int amount, int page, bool? shuffle = false, VideoVisibilityEnum[]? enums = null, string? userUrl = null);
-
-        Task<Video> VideoByIdAsync(string id);
+        Task<List<Video>> GetLastVideos(int daysTake, int daysSkip, string userUrl);
+		Task<List<FormattedVideo>> GetViewsHistory(int amount, int page, string curUserUrl);
+		Task<Video> VideoByIdAsync(string id);
         Task AddViewAsync(string id, ClaimsPrincipal principal);
         Task EditReaction(string videoId, string userUrl, bool reaction, bool doneUndone);
         Task<bool?> GetReaction(Video video, string userUrl);

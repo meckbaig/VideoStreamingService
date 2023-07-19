@@ -17,6 +17,14 @@ namespace VideoStreamingService.Data.ViewModels
             Stream
         }
 
+        public enum FeedTypeEnum
+        {
+            HomePage,
+            Channel,
+            History,
+			Library
+		}
+
         private static List<CtById> uploadTokens = new List<CtById>();
         public static List<CtById> UploadTokens // id - мыло и ссылка на видео
         {

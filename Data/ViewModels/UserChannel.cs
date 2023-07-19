@@ -5,31 +5,23 @@ using VideoStreamingService.Models;
 
 namespace VideoStreamingService.Data.ViewModels
 {
-	public class ChannelVM : User
+	public class UserChannel : User
     {
         public bool Subed { get; set; } = false;
         public bool Ignored { get; set; } = false;
 		public bool OwnChanel { get; set; } = false;
-		public FeedVM FeedVM { get; set; } = new FeedVM();
-        //new public List<FormattedVideo> Videos { get; set; } = new List<FormattedVideo>();
-		public ChannelVM(User user, User curUser, List<Video> videos)
+		public FeedVM FeedVM { get; set; } = new FeedVM() { FeedType = Statics.FeedTypeEnum.Channel };
+		public UserChannel(User user, User curUser, List<Video> videos = null)
 		{
 			foreach (var prop in user.GetType().GetProperties())
 			{
 				try
 				{
-					if(prop.Name != nameof(Videos))
+					if(prop.Name != nameof(Videos) && prop.Name != "Item")
 						this[prop.Name] = user[prop.Name];
 				}
 				catch (TargetParameterCountException) { }
 			}
-			//foreach (Video video in user.Videos)
-			//{
-			//	if (user.Id == curUser?.Id || (video.VisibilityId == (int)VideoVisibilityEnum.Visible))
-			//	{
-			//		Videos.Add(new FormattedVideo(video, curUser));
-			//	}
-			//}
 			if (user.Id == curUser?.Id)
 				OwnChanel = true;
 			else if (curUser != null)
@@ -44,18 +36,18 @@ namespace VideoStreamingService.Data.ViewModels
             else
                 Ignored = true;
 
-			foreach (var v in videos)
-			{
-				FeedVM.Videos.Add(new FormattedVideo(v, curUser));
-			}
-
-
+			if (videos != null)
+				foreach (var v in videos)
+				{
+					FeedVM.Videos.Add(new FormattedVideo(v, curUser));
+				}
 		}
 
-		public ChannelVM()
+		public UserChannel()
 		{
 
 		}
+
 		public string LongSubsString()
 		{
 			long subs = Subscribers.Count;

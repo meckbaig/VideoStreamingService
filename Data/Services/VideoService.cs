@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Globalization;
 using System.Security.Claims;
 using VideoStreamingService.Data.Base;
 using VideoStreamingService.Data.ViewModels;
@@ -37,7 +37,7 @@ namespace VideoStreamingService.Data.Services
 			}
 
 			video.Id = url;
-			User user = await _userService.GetByUrlUserAsync(principal.Identity.Name);
+			User user = await _userService.GetUserByUrlAsync(principal.Identity.Name);
 			video.UserId = user.Id;
 			return video;
 		}
@@ -154,21 +154,14 @@ namespace VideoStreamingService.Data.Services
 
 		public async Task<Video> VideoByIdAsync(string id)
 		{
-			try
-			{
-				Video video = await _context.Videos
-					.Include(v => v.User)
-					.ThenInclude(u => u.Subscribers)
-					.Include(v => v.Reactions)
-					.Include(v => v.Views)
-					.Include(v => v.Visibility)
-					.AsNoTracking().FirstOrDefaultAsync(v => v.Id == id);
-				return video;
-			}
-			catch (Exception)
-			{
-				return null;
-			}
+			Video video = await _context.Videos
+				.Include(v => v.User)
+				.ThenInclude(u => u.Subscribers)
+				.Include(v => v.Reactions)
+				.Include(v => v.Views)
+				.Include(v => v.Visibility)
+				.AsNoTracking().FirstOrDefaultAsync(v => v.Id == id);
+			return video;
 		}
 
 		public async Task<List<Video>> GetVideosAsync(int amount, int page, bool? shuffle = false,
@@ -208,13 +201,69 @@ namespace VideoStreamingService.Data.Services
 			}
 		}
 
+		public async Task<List<Video>> GetLastVideos(int daysTake, int daysSkip, string userUrl)
+		{
+			DateTime take = DateTime.Now.AddDays(-daysTake);
+			DateTime skip = DateTime.Now.AddDays(-daysSkip);
+			User curUser = _context.Users.Include(u => u.Subscriptions)
+				.FirstOrDefault(u => u.Url == userUrl);
+			List<Subscription> subsList = curUser.Subscriptions.ToList();
+
+			List<Video> videosList = new List<Video>();
+			foreach(Subscription sub in subsList)
+			{
+				User user = _context.Users
+					.Include(u => u.Subscribers.Where(s => s.Sub_Ignore == true))
+					.Include(u => u.Videos).ThenInclude(v => v.Views)
+					.Include(u => u.Videos).ThenInclude(v => v.Visibility)
+					.FirstOrDefault(u => u.Id == sub.ToUserId);
+
+				videosList.AddRange(user.Videos.Where(v => 
+					v.Uploaded <= skip && v.Uploaded > take 
+					&& v.Visibility.Name == VideoVisibilityEnum.Visible.ToString()));
+			}
+			videosList = videosList.OrderByDescending(v => v.Uploaded).ToList();
+
+			return videosList;
+		}
+
+		public async Task<List<FormattedVideo>> GetViewsHistory(int amount, int page, string curUserUrl)
+		{
+			User curUser = _context.Users.Include(u => u.Role).FirstOrDefault(u => u.Url == curUserUrl);
+
+			List<Video> vlist = await _context.Videos
+				.Include(u => u.User)
+				.Include(u => u.Views)
+				.Include(u => u.Visibility)
+				.Where(v => v.Views.FirstOrDefault(v => v.UserId == curUser.Id) != null 
+					&& (v.Visibility.Name != VideoVisibilityEnum.Hidden.ToString() || v.UserId == curUser.Id))
+				.Take(amount).Skip((page - 1) * amount)
+				.OrderByDescending(v => v.Views.FirstOrDefault(v => v.UserId == curUser.Id).Date)
+				.ToListAsync();
+
+			//var list = _context.Users.FirstOrDefault(u => u.Url == curUserUrl).Views
+			//	.OrderByDescending(v => v.Date).Select(v => new { v.Video, v.Date })
+			//	.Take(amount).Skip((page - 1) * amount).ToList();
+
+			List<FormattedVideo> fv = new List<FormattedVideo>();
+			foreach (var video in vlist)
+			{
+				fv.Add(new FormattedVideo(video, curUser));
+			}
+
+			return fv;
+		}
+
 		public async Task AddViewAsync(string id, ClaimsPrincipal principal)
 		{
-			User user = await _userService.GetByUrlUserAsync(principal.Identity.Name);
+			User user = await _userService.GetUserByUrlAsync(principal.Identity.Name);
 			Video video = await VideoByIdAsync(id);
 			View view = _context.Views.FirstOrDefault(v => v.UserId == user.Id && v.VideoId == video.Id);
 			if (view != null)
+			{
 				view.Watched++;
+				view.Date = DateTime.Now;
+			}
 			else
 			{
 				view = new View()
@@ -230,7 +279,7 @@ namespace VideoStreamingService.Data.Services
 
 		public async Task EditReaction(string videoId, string userUrl, bool reaction, bool doneUndone)
 		{
-			User user = await _userService.GetByUrlUserAsync(userUrl);
+			User user = await _userService.GetUserByUrlAsync(userUrl);
 			Reaction newReaction = _context.Reactions
 				.FirstOrDefault(r => r.VideoId == videoId && r.UserId == user.Id);
 			if (newReaction != null)
@@ -261,7 +310,7 @@ namespace VideoStreamingService.Data.Services
 
 		public async Task<bool?> GetReaction(Video video, string userUrl)
 		{
-			User user = await _userService.GetByUrlUserAsync(userUrl);
+			User user = await _userService.GetUserByUrlAsync(userUrl);
 			return video.Reactions.FirstOrDefault(r => r.UserId == user.Id)?.Like;
 		}
 	}

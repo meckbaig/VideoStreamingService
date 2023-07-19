@@ -1,6 +1,4 @@
-﻿using VideoStreamingService.Models;
-
-namespace VideoStreamingService.Data.ViewModels
+﻿namespace VideoStreamingService.Data.ViewModels
 {
     public class VideoVM
     {
