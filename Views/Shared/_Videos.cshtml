@@ -2,18 +2,18 @@
 @using VideoStreamingService.Data.ViewModels;
 @model FeedVM;
 
-<div class="row">
+<div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 row-cols-xxl-6">
     @foreach (var v in Model.Videos)
     {
-        <div id="container_@v.Id" class="col-sm-6 col-md-4 col-lg-3 col-xl-3 col-xxl-2 align-content-center rounded mb-2">
+        <div id="container_@v.Url" class="col align-content-center rounded mb-2">
             <div class="position-relative to-hover">
-                <a href="~/Video/watch?url=@v.Id">
-                    <img id="@v.Id" class="rounded-3 preview" style="aspect-ratio: 16/9;" src="~/Videos/@v.Id/@(v.Thumbnail).jpg" onerror="this.src='/thumbnail.jpg'" loading="lazy">
+                <a href="~/Video/watch?url=@v.Url">
+                    <img id="@v.Url" class="rounded-3 preview" style="aspect-ratio: 16/9;" src="~/Videos/@v.Url/@(v.Thumbnail).jpg" onerror="this.src='/thumbnail.jpg'" loading="lazy">
                     <p class="badge position-absolute bottom-0 start-0 bg-dark text-wrap opacity-75" style="margin:6px">@v.LengthString</p>
                     <p class="badge position-absolute bottom-0 end-0 bg-dark text-wrap opacity-75" style="margin:6px">@v.ResolutionString</p>
 
                 </a>
-                <a class="top-0 end-0 to-show position-absolute p-0" style="margin:6px;width:32px;height:32px" href="~/Video/Edit?url=@v.Id">
+                <a class="top-0 end-0 to-show position-absolute p-0" style="margin:6px;width:32px;height:32px" href="~/Video/Edit?url=@v.Url">
                     @if (v.AllowEdit)
                     {
                         <div class="position-relative bg-dark opacity-75 rounded-circle w-100 h-100 m-0">
@@ -26,7 +26,7 @@
             </div>
             <ul class="list-unstyled mt-1">
                 <li>
-                    <a class="text-decoration-none text-reset" title="@v.Title" href="~/Video/watch?url=@v.Id">
+                    <a class="text-decoration-none text-reset" title="@v.Title" href="~/Video/watch?url=@v.Url">
                         <div class="crop-text-2 fw-bold">@v.Title</div>
                     </a>
                 </li>
@@ -86,18 +86,18 @@
             if (v.Visibility == VideoVisibilityEnum.Hidden)
             {
                 <script type="text/javascript">
-                    var thumbnail = document.getElementById('@v.Id');
+                    var thumbnail = document.getElementById('@v.Url');
                     thumbnail.classList.add('border');
                     thumbnail.classList.add('border-3');
                     thumbnail.classList.add('border-danger');
-                    var container = document.getElementById('container_@v.Id');
+                    var container = document.getElementById('container_@v.Url');
                     container.classList.add('opacity-50');
                 </script>
             }
             else if (v.Visibility == VideoVisibilityEnum.LinkAccess)
             {
                 <script type="text/javascript">
-                    var thumbnail = document.getElementById('@v.Id');
+                    var thumbnail = document.getElementById('@v.Url');
                     thumbnail.classList.add('border');
                     thumbnail.classList.add('border-3');
                     thumbnail.classList.add('border-warning');

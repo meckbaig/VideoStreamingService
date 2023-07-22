@@ -30,13 +30,13 @@ namespace VideoStreamingService.Data.Services
 				{
 					url += Statics.UrlChars[new Random().Next(0, Statics.UrlChars.Length)];
 				}
-				if (await VideoByIdAsync(url) == null)
+				if (await VideoByUrlAsync(url) == null)
 					unique = true;
 				else
 					url = "";
 			}
 
-			video.Id = url;
+			video.Url = url;
 			User user = await _userService.GetUserByUrlAsync(principal.Identity.Name);
 			video.UserId = user.Id;
 			return video;
@@ -48,7 +48,7 @@ namespace VideoStreamingService.Data.Services
 			{
 				while (!ct.IsCancellationRequested)
 				{
-					Video _video = _context.Videos.FirstOrDefault(v => v.Id == video.Id);
+					Video _video = _context.Videos.FirstOrDefault(v => v.Url == video.Url);
 					if (_video == null)
 						_context.Videos.Add(video);
 					else
@@ -72,7 +72,7 @@ namespace VideoStreamingService.Data.Services
 						}
 					}
 					_context.SaveChanges();
-					Debug.Print($"{video.Id} saved");
+					Debug.Print($"{video.Url} saved");
 					break;
 				}
 			}
@@ -87,13 +87,13 @@ namespace VideoStreamingService.Data.Services
 			{
 				while (!ct.IsCancellationRequested)
 				{
-					Video _video = _context.Videos.FirstOrDefault(v => v.Id == video.Id);
+					Video _video = _context.Videos.FirstOrDefault(v => v.Url == video.Url);
 					foreach (var prop in props)
 					{
 						_video[prop] = video[prop];
 					}
 					_context.SaveChanges();
-					Debug.Print($"{video.Id} saved");
+					Debug.Print($"{video.Url} saved");
 					break;
 				}
 
@@ -105,27 +105,27 @@ namespace VideoStreamingService.Data.Services
 
 		public async Task<bool> DeleteVideo(Video video)
 		{
-			var v = _context.Videos.FirstOrDefault(v => v.Id == video.Id);
+			var v = _context.Videos.FirstOrDefault(v => v.Url == video.Url);
 			try
 			{
 				Statics.TokenType tt = Statics.TokenType.Upload;
-				CancellationTokenSource cts = Statics.GetToken(video.Id, tt);
+				CancellationTokenSource cts = Statics.GetToken(video.Url, tt);
 				if (cts != null)
 				{
 					cts.Cancel();
 					await Task.Delay(1000);
-					Statics.RemoveToken(video.Id, tt);
+					Statics.RemoveToken(video.Url, tt);
 					_context.Videos.Remove(v);
 
 					_context.SaveChanges();
-					Debug.Print($"{video.Id} deleted");
+					Debug.Print($"{video.Url} deleted");
 					return true;
 				}
 				else
 				{
 					_context.Videos.Remove(v);
 					_context.SaveChanges();
-					Debug.Print($"{video.Id} deleted");
+					Debug.Print($"{video.Url} deleted");
 					return true;
 				}
 			}
@@ -152,7 +152,7 @@ namespace VideoStreamingService.Data.Services
 			}
 		}
 
-		public async Task<Video> VideoByIdAsync(string id)
+		public async Task<Video> VideoByUrlAsync(string url)
 		{
 			Video video = await _context.Videos
 				.Include(v => v.User)
@@ -160,11 +160,11 @@ namespace VideoStreamingService.Data.Services
 				.Include(v => v.Reactions)
 				.Include(v => v.Views)
 				.Include(v => v.Visibility)
-				.AsNoTracking().FirstOrDefaultAsync(v => v.Id == id);
+				.AsNoTracking().FirstOrDefaultAsync(v => v.Url == url);
 			return video;
 		}
 
-		public async Task<List<Video>> GetVideosAsync(int amount, int page, bool? shuffle = false,
+		public async Task<List<Video>> GetVideosAsync(int? amount = null, int? page = null, bool? shuffle = null,
 			VideoVisibilityEnum[]? enums = null, string? userUrl = null)
 		{
 			try
@@ -187,11 +187,13 @@ namespace VideoStreamingService.Data.Services
 					}
 					list = newList;
 				}
-
-				if ((bool)shuffle)
-					list = Statics.Shuffle(list);
-				else
-					list = list.OrderByDescending(v => v.Uploaded).ToList();
+				if (shuffle != null)
+				{
+					if ((bool)shuffle)
+						list = Statics.Shuffle(list);
+					else
+						list = list.OrderByDescending(v => v.Uploaded).ToList();
+				}
 
 				return list;
 			}
@@ -210,7 +212,7 @@ namespace VideoStreamingService.Data.Services
 			List<Subscription> subsList = curUser.Subscriptions.ToList();
 
 			List<Video> videosList = new List<Video>();
-			foreach(Subscription sub in subsList)
+			foreach (Subscription sub in subsList)
 			{
 				User user = _context.Users
 					.Include(u => u.Subscribers.Where(s => s.Sub_Ignore == true))
@@ -218,8 +220,8 @@ namespace VideoStreamingService.Data.Services
 					.Include(u => u.Videos).ThenInclude(v => v.Visibility)
 					.FirstOrDefault(u => u.Id == sub.ToUserId);
 
-				videosList.AddRange(user.Videos.Where(v => 
-					v.Uploaded <= skip && v.Uploaded > take 
+				videosList.AddRange(user.Videos.Where(v =>
+					v.Uploaded <= skip && v.Uploaded > take
 					&& v.Visibility.Name == VideoVisibilityEnum.Visible.ToString()));
 			}
 			videosList = videosList.OrderByDescending(v => v.Uploaded).ToList();
@@ -235,7 +237,7 @@ namespace VideoStreamingService.Data.Services
 				.Include(u => u.User)
 				.Include(u => u.Views)
 				.Include(u => u.Visibility)
-				.Where(v => v.Views.FirstOrDefault(v => v.UserId == curUser.Id) != null 
+				.Where(v => v.Views.FirstOrDefault(v => v.UserId == curUser.Id) != null
 					&& (v.Visibility.Name != VideoVisibilityEnum.Hidden.ToString() || v.UserId == curUser.Id))
 				.Take(amount).Skip((page - 1) * amount)
 				.OrderByDescending(v => v.Views.FirstOrDefault(v => v.UserId == curUser.Id).Date)
@@ -254,11 +256,11 @@ namespace VideoStreamingService.Data.Services
 			return fv;
 		}
 
-		public async Task AddViewAsync(string id, ClaimsPrincipal principal)
+		public async Task AddViewAsync(string url, ClaimsPrincipal principal)
 		{
 			User user = await _userService.GetUserByUrlAsync(principal.Identity.Name);
-			Video video = await VideoByIdAsync(id);
-			View view = _context.Views.FirstOrDefault(v => v.UserId == user.Id && v.VideoId == video.Id);
+			Video video = await VideoByUrlAsync(url);
+			View view = _context.Views.FirstOrDefault(v => v.UserId == user.Id && v.VideoUrl == video.Url);
 			if (view != null)
 			{
 				view.Watched++;
@@ -269,7 +271,7 @@ namespace VideoStreamingService.Data.Services
 				view = new View()
 				{
 					UserId = user.Id,
-					VideoId = video.Id,
+					VideoUrl = video.Url,
 					Watched = 1
 				};
 				_context.Views.Add(view);
@@ -281,7 +283,7 @@ namespace VideoStreamingService.Data.Services
 		{
 			User user = await _userService.GetUserByUrlAsync(userUrl);
 			Reaction newReaction = _context.Reactions
-				.FirstOrDefault(r => r.VideoId == videoId && r.UserId == user.Id);
+				.FirstOrDefault(r => r.VideoUrl == videoId && r.UserId == user.Id);
 			if (newReaction != null)
 			{
 				if (doneUndone)
@@ -297,7 +299,7 @@ namespace VideoStreamingService.Data.Services
 			{
 				newReaction = new Reaction()
 				{
-					VideoId = videoId,
+					VideoUrl = videoId,
 					UserId = user.Id,
 					Like = reaction,
 					Date = DateTime.Now
@@ -313,5 +315,34 @@ namespace VideoStreamingService.Data.Services
 			User user = await _userService.GetUserByUrlAsync(userUrl);
 			return video.Reactions.FirstOrDefault(r => r.UserId == user.Id)?.Like;
 		}
-	}
+
+		public async Task<List<FormattedVideo>> SearchVideosAsync(string searchText, string curUserUrl)
+		{
+			User curUser = await _userService.GetUserByUrlAsync(curUserUrl);
+			List<Video> videoList = await GetVideosAsync(enums: new[] { VideoVisibilityEnum.Visible });
+			//videoList = videoList.Where(v => v.Title.Contains(searchText, StringComparison.CurrentCultureIgnoreCase)).ToList();
+			List<FormattedVideo> formattedVideos = new List<FormattedVideo>();
+			List<Task> tasks = new List<Task>();
+
+			foreach (Video video in videoList)
+			{
+				var task = new Task(() =>
+				{
+					double dc1, dc2;
+					FormattedVideo formattedVideo = new FormattedVideo(video, curUser);
+                    dc1 = Statics.DiceCoefficient(searchText, video.Title);
+                    dc2 = Statics.DiceCoefficient(searchText, video.User.Name);
+					formattedVideo.DiceCoefficient = dc1 > dc2 ? dc1 : dc2;
+                    if (formattedVideo.DiceCoefficient > 0)
+						formattedVideos.Add(formattedVideo);
+				});
+				tasks.Add(task);
+                tasks.Last().Start();
+
+            }
+			await Task.WhenAll(tasks);
+            return formattedVideos;
+		}
+
+    }
 }

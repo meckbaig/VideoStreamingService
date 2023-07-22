@@ -12,12 +12,13 @@
 <body>
     <header id="header">
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm border-bottom box-shadow mb-3">
-            <div class="container-fluid">
+            <div class="container-fluid d-flex">
                 <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">VideoStreamingService</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
-                </button>@if (User.Identity.IsAuthenticated)
+                </button>
+                @if (User.Identity.IsAuthenticated)
                 {
                     <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     
@@ -31,12 +32,16 @@
                             <li class="nav-item">
                                 <a class="nav-link" asp-area="" asp-controller="Home" asp-action="History">История</a>
                             </li>
-                        </ul>
-                    
+						</ul>
                     </div>
                 }
-
-                <partial name="_Identity.cshtml" />
+				<div class="input-group align-self-center mt-1 mb-3 mx-md-4 my-md-0">
+					<input type="text" id="searchInput" class="form-control" placeholder="Поиск"
+                        value="@(TempData["SearchString"] != null ? TempData["SearchString"] : "")" aria-describedby="searchBuutton2">
+                    <button class="btn btn-outline-secondary" onclick="searchClick()" id="searchButton">🔎</button>
+				</div>
+				<partial name="_Identity.cshtml" />
+                
             </div>
         </nav>
     </header>
@@ -63,6 +68,19 @@
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="~/js/filedrop.js"></script>
     <script type="text/javascript">
+            
+        $(document).ready(function () {
+            $("#searchInput").keypress(function (event) {
+                if (event.which == 13) {
+                        searchClick();
+                    }
+                });
+            });
+        function searchClick() {
+            if ($("#searchInput").val().replace(/\s/g, '') != ""){
+                window.location =  "/Home/Search?s=" + $("#searchInput").val();
+            }
+        }
         // Подсказки
         const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
         const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));

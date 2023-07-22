@@ -62,7 +62,7 @@ namespace VideoStreamingService.Controllers
             string url = "";
             if (!String.IsNullOrEmpty(HttpContext.Request.Query[nameof(url)]))
                 url = HttpContext.Request.Query[nameof(url)];
-            Video video = await _videoService.VideoByIdAsync(url);
+            Video video = await _videoService.VideoByUrlAsync(url);
             if (video.User.Url == User.Identity.Name || User.IsInRole(RoleEnum.Developer.ToString()))
                 return View("Edit", video);
             else
@@ -79,7 +79,7 @@ namespace VideoStreamingService.Controllers
             string url = "";
             if (!String.IsNullOrEmpty(HttpContext.Request.Query[nameof(url)]))
                 url = HttpContext.Request.Query[nameof(url)];
-            Video video = await _videoService.VideoByIdAsync(url);
+            Video video = await _videoService.VideoByUrlAsync(url);
 
             List<int> resolutions = new List<int>() { 240 };
             if (video.Resolution >= 480)
@@ -94,7 +94,7 @@ namespace VideoStreamingService.Controllers
             };
             if (videoVM.Video.Visibility != VideoVisibilityEnum.Hidden || videoVM.Video.AllowEdit)
             {
-                TempData["WideVideo"] = curUser.WideVideo;
+                TempData["WideVideo"] = curUser?.WideVideo;
 				return View(videoVM);
             }
             else
@@ -110,8 +110,11 @@ namespace VideoStreamingService.Controllers
 		[HttpPost]
 		public async Task<IActionResult> SaveScreenWidth([FromBody] JsonDocument data)
         {
-			string wv = data.RootElement.GetProperty("wvBool").ToString();
-            _userService.SaveScreenWidth(User.Identity.Name, wv == "true");
+            if (User.Identity.IsAuthenticated)
+            {
+			    string wideVideo = data.RootElement.GetProperty("wvBool").ToString();
+                _userService.SaveScreenWidth(User.Identity.Name, wideVideo == "true");
+            }
 			return new EmptyResult();
 		}
 
@@ -128,9 +131,9 @@ namespace VideoStreamingService.Controllers
 		[RequestFormLimits(MultipartBodyLengthLimit = 2200000000)]
         public async Task<IActionResult> ShowVideoInEditor([FromBody] JsonDocument data)
         {
-            string id = data.RootElement.GetProperty("Id").ToString();
-            string path = Path.Combine(_appEnvironment.WebRootPath, "Videos", id, "240.mp4");
-            string tmpPath = Path.Combine(_appEnvironment.WebRootPath, "Videos", id, "240done");
+            string url = data.RootElement.GetProperty("Url").ToString();
+            string path = Path.Combine(_appEnvironment.WebRootPath, "Videos", url, "240.mp4");
+            string tmpPath = Path.Combine(_appEnvironment.WebRootPath, "Videos", url, "240done");
             while (!System.IO.File.Exists(tmpPath))
             {
                 await Task.Delay(1000);
@@ -154,18 +157,18 @@ namespace VideoStreamingService.Controllers
         {
             if (User.Identity.Name != null)
             {
-                string id = data.RootElement.GetProperty("Id").ToString();
-                await _videoService.AddViewAsync(id, User);
+                string url = data.RootElement.GetProperty("Url").ToString();
+                await _videoService.AddViewAsync(url, User);
             }
         }
 
         [HttpPost]
         public async Task ConvertVideo([FromBody] JsonDocument data)
         {
-            string id = data.RootElement.GetProperty("Id").ToString();
+            string url = data.RootElement.GetProperty("Url").ToString();
             string ex = data.RootElement.GetProperty("Ex").ToString();
-            string path = Path.Combine(_appEnvironment.WebRootPath, "Videos", id, $"original{ex}");
-            await _videoProcessingService.ConvertVideo(path, Statics.AddToken(id, Statics.TokenType.Upload).Token);
+            string path = Path.Combine(_appEnvironment.WebRootPath, "Videos", url, $"original{ex}");
+            await _videoProcessingService.ConvertVideo(path, Statics.AddToken(url, Statics.TokenType.Upload).Token);
         }
 
         public async Task<IActionResult> SaveVideo(Video video)
@@ -184,7 +187,7 @@ namespace VideoStreamingService.Controllers
         {
             if (!await _videoService.DeleteVideo(video))
                 return View("Edit");
-            _videoService.DeleteDirectory(Path.Combine(_appEnvironment.WebRootPath, "Videos", video.Id));
+            _videoService.DeleteDirectory(Path.Combine(_appEnvironment.WebRootPath, "Videos", video.Url));
             if (string.IsNullOrEmpty(Request.Cookies["LastPage"]))
                 return Redirect("/Home/Index");
             return Redirect(Request.Cookies["LastPage"]);

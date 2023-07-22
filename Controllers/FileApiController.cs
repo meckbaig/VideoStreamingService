@@ -33,10 +33,10 @@ namespace VideoStreamingService.Controllers
             string path = Path.Combine(_webEnvironment.WebRootPath, "Videos");
             if (!Directory.Exists(path))
                 Directory.CreateDirectory(path);
-            Directory.CreateDirectory($"{path}\\{video.Id}");
+            Directory.CreateDirectory($"{path}\\{video.Url}");
 
             string ext = Path.GetExtension(video.File.FileName);
-            path = Path.Combine(path, video.Id, $"original{ext}");
+            path = Path.Combine(path, video.Url, $"original{ext}");
             using (FileStream stream = new FileStream(path, FileMode.Create))
             {
                 video.File.CopyTo(stream);
@@ -44,8 +44,8 @@ namespace VideoStreamingService.Controllers
 
             Statics.TokenType tt = Statics.TokenType.Upload;
             IMediaInfo mediaInfo = await FFmpeg.GetMediaInfo(path);
-            await _videoProcessingService.ExecutePreviews(mediaInfo, path, Statics.AddToken(video.Id, tt).Token);
-            Statics.RemoveToken(video.Id, tt);
+            await _videoProcessingService.ExecutePreviews(mediaInfo, path, Statics.AddToken(video.Url, tt).Token);
+            Statics.RemoveToken(video.Url, tt);
 
             return Ok(ext);
         }

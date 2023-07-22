@@ -67,7 +67,7 @@
     function refreshPartial(){
         var file = $("#file")[0].files[0];
         var video = {
-            Id: "@Model.Id",
+            Url: "@Model.Url",
             Title: file.name.slice(0, file.name.lastIndexOf('.')),
             UserId: @Model.UserId,
         }
@@ -90,13 +90,13 @@
         $.ajax({
             url: "/Video/ShowVideoInEditor",
             type: "POST",
-            data: JSON.stringify({ Id: "@Model.Id" }),
+            data: JSON.stringify({ Url: "@Model.Url" }),
             cache: false,
             contentType: "application/json",
             processData: false,
         }).done(function (source) {
             var video = document.getElementById('templateVideoPlayer'); 
-            video.setAttribute("src", "/api/FileApi/GetVideo?url=@Model.Id&quality=240")
+            video.setAttribute("src", "/api/FileApi/GetVideo?url=@Model.Url&quality=240")
         });
     }
 
@@ -104,7 +104,7 @@
         var formData = new FormData();
         //formData.append("fileName", $("#fileName").val());
         var file = $("#file")[0].files[0];
-        formData.append("Id", "@Model.Id");
+        formData.append("Url", "@Model.Url");
         formData.append("file", file);
         $.ajax({
             type: 'POST',
@@ -117,7 +117,7 @@
                 for (let i = 0; i < 3; i++) {
                     var name = "tn"+i;
                     var rb = document.getElementById(name);
-                    var source = "\\Videos\\@Model.Id\\"+i+".jpg";
+                    var source = "\\Videos\\@Model.Url\\"+i+".jpg";
                     rb.setAttribute("src", source);
                     if (i == @Model.Thumbnail){
                         rb.checked = true;
@@ -145,7 +145,7 @@
         $.ajax({
             url: "/Video/ConvertVideo",
             type: "POST",
-            data: JSON.stringify({ Id: "@Model.Id", Ex: ex }),
+            data: JSON.stringify({ Url: "@Model.Url", Ex: ex }),
             cache: false,
             contentType: "application/json",
             processData: false,

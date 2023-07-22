@@ -5,12 +5,14 @@ using VideoStreamingService.Models;
 
 namespace VideoStreamingService.Data.ViewModels
 {
-	public class UserChannel : User
+	public class UserChannel : User, ISearchElement
     {
         public bool Subed { get; set; } = false;
         public bool Ignored { get; set; } = false;
 		public bool OwnChanel { get; set; } = false;
-		public FeedVM FeedVM { get; set; } = new FeedVM() { FeedType = Statics.FeedTypeEnum.Channel };
+        public double? DiceCoefficient { get; set; }
+        public long? MaxResults { get => Subscribers.Count; }
+        public FeedVM FeedVM { get; set; } = new FeedVM() { FeedType = Statics.FeedTypeEnum.Channel };
 		public UserChannel(User user, User curUser, List<Video> videos = null)
 		{
 			foreach (var prop in user.GetType().GetProperties())

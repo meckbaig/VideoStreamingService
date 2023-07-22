@@ -43,6 +43,13 @@ body {
     display: -webkit-box;
     -webkit-box-orient: vertical;
 }
+.crop-text-3 {
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+}
 
 /*#dropSection {
     height: 90%;

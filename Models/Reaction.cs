@@ -2,7 +2,7 @@
 {
 	public class Reaction
 	{
-		public string VideoId { get; set; }
+		public string VideoUrl { get; set; }
 		public Video Video { get; set; }
 
 		public int UserId { get; set; }

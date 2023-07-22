@@ -22,7 +22,9 @@ namespace VideoStreamingService.Data.ViewModels
             HomePage,
             Channel,
             History,
-			Library
+			Library,
+            Search,
+			Recommendations
 		}
 
         private static List<CtById> uploadTokens = new List<CtById>();
@@ -139,5 +141,23 @@ namespace VideoStreamingService.Data.ViewModels
 			}
 			return shortNumber.ToString("N1") + suffix; 
 		}
-	}
+
+
+        public static double DiceCoefficient(string strA, string strB)
+        {
+            HashSet<string> setA = new HashSet<string>();
+            HashSet<string> setB = new HashSet<string>();
+
+            for (int i = 0; i < strA.Length - 1; ++i)
+                setA.Add(strA.Substring(i, 2).ToLower().Normalize());
+
+            for (int i = 0; i < strB.Length - 1; ++i)
+                setB.Add(strB.Substring(i, 2).ToLower().Normalize());
+
+            HashSet<string> intersection = new HashSet<string>(setA);
+            intersection.IntersectWith(setB);
+
+            return (2.0 * intersection.Count) / (setA.Count + setB.Count);
+        }
+    }
 }

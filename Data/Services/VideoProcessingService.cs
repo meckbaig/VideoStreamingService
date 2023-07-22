@@ -146,7 +146,7 @@ namespace VideoStreamingService.Data.Services
         private async Task<Video> AddVideoInfo(IMediaInfo mediaInfo, string output) // Добавляет длину и разрешение
 		{
 			string id = Path.GetFileName(Path.GetDirectoryName(output));
-			Video video = await _videoService.VideoByIdAsync(id);
+			Video video = await _videoService.VideoByUrlAsync(id);
 			video.Length = (short)mediaInfo.Duration.TotalSeconds;
 			video.Resolution = Convert.ToInt16(Path.GetFileNameWithoutExtension(output));
 
@@ -160,13 +160,13 @@ namespace VideoStreamingService.Data.Services
 
 		public async Task<Video> AddVideoInfo(Video video, string webroot) // Добавляет длину и разрешение при сохранении
 		{
-			string path = Path.Combine(webroot, "Videos", video.Id);
+			string path = Path.Combine(webroot, "Videos", video.Url);
 			short res = await GetMaxResolution(path);
 			if (res > 0 && res != video.Resolution)
 			{
 				try
 				{
-					if (File.Exists(Path.Combine(path, "original.mp4")) && Statics.GetToken(video.Id, Statics.TokenType.Upload) == null)
+					if (File.Exists(Path.Combine(path, "original.mp4")) && Statics.GetToken(video.Url, Statics.TokenType.Upload) == null)
 						File.Delete(Path.Combine(path, "original.mp4"));
 					path = Path.Combine(path, $"{res}.mp4");
 					IMediaInfo mediaInfo = await FFmpeg.GetMediaInfo(path);
@@ -236,9 +236,9 @@ namespace VideoStreamingService.Data.Services
 		{
 			try
 			{
-				if (!Directory.Exists($"{folderPath}\\{video.Id}"))
-					Directory.CreateDirectory($"{folderPath}\\{video.Id}");
-				string path = Path.Combine(folderPath, video.Id, $"3.jpg");
+				if (!Directory.Exists($"{folderPath}\\{video.Url}"))
+					Directory.CreateDirectory($"{folderPath}\\{video.Url}");
+				string path = Path.Combine(folderPath, video.Url, $"3.jpg");
 				await using var memoryStream = new MemoryStream();
 				await video.File.CopyToAsync(memoryStream);
 

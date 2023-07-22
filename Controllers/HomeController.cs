@@ -70,6 +70,19 @@ namespace VideoStreamingService.Controllers
 			return View(feedVM);
 		}
 
+		public async Task<IActionResult> Search()
+        {
+            string s = "";
+            if (!String.IsNullOrEmpty(HttpContext.Request.Query[nameof(s)]))
+                s = HttpContext.Request.Query[nameof(s)].ToString().Replace('_', ' ');
+            TempData["SearchString"] = s;
+            SearchVM searchVM = new SearchVM();
+			searchVM.SearchElements.AddRange(await _videoService.SearchVideosAsync(s, User.Identity.Name));
+			searchVM.SearchElements.AddRange(await _userService.SearchUsersAsync(s, User.Identity.Name));
+			searchVM.SearchElements = searchVM.SearchElements.OrderByDescending(se => se.DiceCoefficient).ThenByDescending(se => se.MaxResults).ToList();
+			return View(searchVM);
+		}
+
 		public async Task<IActionResult> Library()
 		{
 			if (!User.Identity.IsAuthenticated)

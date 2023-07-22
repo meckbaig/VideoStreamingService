@@ -12,17 +12,17 @@ namespace VideoStreamingService.Data
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
-			modelBuilder.Entity<Reaction>().HasKey(r => new { r.UserId, r.VideoId });
+			modelBuilder.Entity<Reaction>().HasKey(r => new { r.UserId, r.VideoUrl });
             modelBuilder.Entity<Reaction>().HasOne(r => r.User).WithMany(u => u.Reactions).HasForeignKey(r => r.UserId);
-			modelBuilder.Entity<Reaction>().HasOne(r => r.Video).WithMany(v => v.Reactions).HasForeignKey(r => r.VideoId);
+			modelBuilder.Entity<Reaction>().HasOne(r => r.Video).WithMany(v => v.Reactions).HasForeignKey(r => r.VideoUrl);
 
-			modelBuilder.Entity<Video_Category>().HasKey(vc => new { vc.CategoryId, vc.VideoId });
+			modelBuilder.Entity<Video_Category>().HasKey(vc => new { vc.CategoryId, vc.VideoUrl });
 			modelBuilder.Entity<Video_Category>().HasOne(vc => vc.Category).WithMany(c => c.Video_Categories).HasForeignKey(vc => vc.CategoryId);
-			modelBuilder.Entity<Video_Category>().HasOne(vc => vc.Video).WithMany(v => v.Video_Categories).HasForeignKey(vc => vc.VideoId);
+			modelBuilder.Entity<Video_Category>().HasOne(vc => vc.Video).WithMany(v => v.Video_Categories).HasForeignKey(vc => vc.VideoUrl);
 
-			modelBuilder.Entity<View>().HasKey(v => new { v.UserId, v.VideoId });
+			modelBuilder.Entity<View>().HasKey(v => new { v.UserId, v.VideoUrl });
             modelBuilder.Entity<View>().HasOne(v => v.User).WithMany(u => u.Views).HasForeignKey(v => v.UserId);
-            modelBuilder.Entity<View>().HasOne(v => v.Video).WithMany(v => v.Views).HasForeignKey(v => v.VideoId);
+            modelBuilder.Entity<View>().HasOne(v => v.Video).WithMany(v => v.Views).HasForeignKey(v => v.VideoUrl);
 
             modelBuilder.Entity<Subscription>().HasKey(s => new { s.FromUserId, s.ToUserId });
             modelBuilder.Entity<Subscription>().HasOne(s => s.FromUser).WithMany(u => u.Subscriptions).HasForeignKey(s => s.FromUserId);

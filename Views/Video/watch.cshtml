@@ -14,8 +14,8 @@
 		@*<div class="row-12">*@
 		<div id="container" class="col-12 col-md-10 col-lg-9 col-xl-8">
 			<vm-player id="videoContainer" autoplay autopause="false">
-				<vm-video id="videoPlayer" cross-origin="true" poster="/Videos/@Model.Video.Id/@(Model.Video.Thumbnail).jpg">
-						<source id="videoSource" data-src='/api/FileApi/GetVideo?url=@(Model.Video.Id)' type="video/mp4" />
+				<vm-video id="videoPlayer" cross-origin="true" poster="/Videos/@Model.Video.Url/@(Model.Video.Thumbnail).jpg">
+						<source id="videoSource" data-src='/api/FileApi/GetVideo?url=@(Model.Video.Url)' type="video/mp4" />
 					</vm-video>
 					<vm-ui>
 						<vm-scrim gradient="up"></vm-scrim>
@@ -138,7 +138,7 @@
 }
 
 <script type="text/javascript">
-	var wideVideoBool = @TempData["WideVideo"].ToString().ToLower();
+	var wideVideoBool = @(TempData["WideVideo"]?.ToString()?.ToLower() ?? "false")
 	const container = document.getElementById('container');
 	const player = document.getElementById('videoContainer');
 	const submenuQuality = document.getElementById('submenuQuality');
@@ -191,7 +191,7 @@
 		$.ajax({
 			url: "/Video/Reaction/",
 			type: "POST",
-			data: JSON.stringify({ Id: "@Model.Video.Id", Reaction: event.currentTarget.value, DoneUndone: doneUndone }),
+			data: JSON.stringify({ Url: "@Model.Video.Url", Reaction: event.currentTarget.value, DoneUndone: doneUndone }),
 			cache: false,
 			contentType: "application/json",
 			processData: false,
@@ -238,7 +238,7 @@
 		$.ajax({
 			url: "/Video/CountView",
 			type: "POST",
-			data: JSON.stringify({ Id: "@Model.Video.Id" }),
+			data: JSON.stringify({ Url: "@Model.Video.Url" }),
             cache: false,
             contentType: "application/json",
             processData: false,
@@ -273,7 +273,7 @@
 		//	p[i].remove();
 		//}
 		//document.getElementById('videoPlayer').removeAttribute("poster");
-		var source = "/api/FileApi/GetVideo?url=@Model.Video.Id&quality=" + radio.value;
+		var source = "/api/FileApi/GetVideo?url=@Model.Video.Url&quality=" + radio.value;
 		document.getElementById('videoSource').setAttribute("data-src", source);
 		player.play();
 		player.autoplay = true;

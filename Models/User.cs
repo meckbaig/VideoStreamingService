@@ -2,10 +2,11 @@
 using VideoStreamingService.Data.Base;
 using VideoStreamingService.Data;
 using Microsoft.AspNetCore.Mvc;
-    
+using VideoStreamingService.Data.ViewModels;
+
 namespace VideoStreamingService.Models
 {
-	public class User : BasicClass, IEntityBase
+	public class User : BasicClass
     {
 		[Key]
 		public int Id { get; set; }
