@@ -10,6 +10,7 @@ using VideoStreamingService.Data.ViewModels;
 using VideoStreamingService.Models;
 using System;
 using System.Text.Json;
+using Microsoft.VisualBasic;
 
 namespace VideoStreamingService.Controllers
 {
@@ -18,37 +19,35 @@ namespace VideoStreamingService.Controllers
         private readonly IUserService _userService;
         private readonly ILogger<HomeController> _logger;
         private readonly IVideoService _videoService;
+        private readonly IUpdateDataService _updateDataService;
 
-        public HomeController(IUserService userService, ILogger<HomeController> logger, IVideoService videoService)
+        public HomeController(IUserService userService, ILogger<HomeController> logger, IVideoService videoService,
+            IUpdateDataService updateDataService)
         {
             _userService = userService;
             _logger = logger;
             _videoService = videoService;
+            _updateDataService = updateDataService;
         }
 
         public async Task<IActionResult> Index()
         {
-            FeedVM feedVM = new FeedVM() { FeedType = Statics.FeedTypeEnum.HomePage };
-            List<Video> videos = await _videoService.GetVideosAsync(50, 1, true, new [] { VideoVisibilityEnum.Visible });
-            User curUser = await _userService.GetUserByUrlAsync(User.Identity.Name);
-
-            foreach (Video video in videos)
+            FeedVM feedVM = new FeedVM()
             {
-                if (video.Length > 0 && video.Resolution > 0)
-				{
-                    feedVM.Videos.Add(new FormattedVideo(video, curUser));
-				}
-            }
+                FeedType = Statics.FeedTypeEnum.HomePage,
+                Videos = await _updateDataService.GetRandomVideos(Statics.VideosOnPage, 1, User.Identity.Name)
+            };
+
             return View(feedVM);
         }
 
-		public async Task<IActionResult> Privacy()
-		{
-			return View();
-		}
+        public async Task<IActionResult> Privacy()
+        {
+            return View();
+        }
 
-		public async Task<IActionResult> Subscriptions()
-		{
+        public async Task<IActionResult> Subscriptions()
+        {
             if (!User.Identity.IsAuthenticated)
                 return Redirect("/Home/Index");
             SubscriptionsVM subsVM = new SubscriptionsVM(
@@ -56,71 +55,133 @@ namespace VideoStreamingService.Controllers
                 await _userService.GetUserByUrlAsync(User.Identity.Name));
 
             return View(subsVM);
-		}
+        }
 
-		public async Task<IActionResult> History()
-		{
-			if (!User.Identity.IsAuthenticated)
-				return Redirect("/Home/Index");
-			FeedVM feedVM = new FeedVM()
-			{
-				Videos = await _videoService.GetViewsHistory(Statics.VideosOnPage, 1, User.Identity.Name),
-				FeedType = Statics.FeedTypeEnum.History
-			};
-			return View(feedVM);
-		}
-
-		public async Task<IActionResult> Search()
+        public async Task<IActionResult> History()
         {
-            string s = "";
-            if (!String.IsNullOrEmpty(HttpContext.Request.Query[nameof(s)]))
-                s = HttpContext.Request.Query[nameof(s)].ToString().Replace('_', ' ');
-            TempData["SearchString"] = s;
-            SearchVM searchVM = new SearchVM();
-			searchVM.SearchElements.AddRange(await _videoService.SearchVideosAsync(s, User.Identity.Name));
-			searchVM.SearchElements.AddRange(await _userService.SearchUsersAsync(s, User.Identity.Name));
-			searchVM.SearchElements = searchVM.SearchElements.OrderByDescending(se => se.DiceCoefficient).ThenByDescending(se => se.MaxResults).ToList();
-			return View(searchVM);
-		}
+            if (!User.Identity.IsAuthenticated)
+                return Redirect("/Home/Index");
+            FeedVM feedVM = new FeedVM()
+            {
+                Videos = await _updateDataService.GetVideosHistory(Statics.VideosOnPage, 1, User.Identity.Name),
+                FeedType = Statics.FeedTypeEnum.History
+            };
+            return View(feedVM);
+        }
 
-		public async Task<IActionResult> Library()
-		{
-			if (!User.Identity.IsAuthenticated)
-				return Redirect("/Home/Index");
-			List<Video> videos = await _videoService.GetLastVideos(1, 0, User.Identity.Name);
-			FeedVM feedVM = new FeedVM() { FeedType = Statics.FeedTypeEnum.Library };
+        [HttpPost]
+        public async Task<IActionResult> LoadVideos([FromBody] JsonDocument data)
+        {
+            Enum.TryParse(data.RootElement.GetProperty("feedType").ToString(), out Statics.FeedTypeEnum feedType);
+            int nextPage = Convert.ToInt32(data.RootElement.GetProperty(nameof(nextPage)).ToString());
 
-			foreach (Video video in videos)
-			{
-				feedVM.Videos.Add(
-					new FormattedVideo(video,
-						await _userService.GetUserByUrlAsync(User.Identity.Name)));
-			}
+            List<FormattedVideo> videos;
+            try
+            {
+                switch (feedType)
+                {
+                    case Statics.FeedTypeEnum.History:
+                        videos = await _updateDataService.GetVideosHistory(Statics.VideosOnPage, nextPage,
+                            User.Identity.Name);
+                        break;
+                    case Statics.FeedTypeEnum.Library:
+                        int daysTake = Convert.ToInt32(data.RootElement.GetProperty("daysTake").ToString());
+                        int daysSkip = Convert.ToInt32(data.RootElement.GetProperty("daysSkip").ToString());
+                        videos = await _updateDataService.GetLastVideos(daysTake, daysSkip,
+                            Statics.VideosOnPage, nextPage, User.Identity.Name);
+                        break;
+                    case Statics.FeedTypeEnum.HomePage:
+                        List<string> urlsList = JsonSerializer
+                            .Deserialize<string[]>(data.RootElement.GetProperty("urlsArr")).ToList();
+                        videos = await _updateDataService.GetRandomVideos(Statics.VideosOnPage, nextPage,
+                            User.Identity.Name, urlsList);
+                        break;
+                    case Statics.FeedTypeEnum.Search:
+                        string searchString = data.RootElement.GetProperty(nameof(searchString)).ToString();
+                        SearchVM searchVM = await _updateDataService.GetSearchResults(
+                            Statics.VideosOnPage / 2, nextPage, searchString, User.Identity.Name);
+                        ViewData["FeedType"] = Statics.FeedTypeEnum.Search.ToString();
+                        return PartialView("_SearchResults", searchVM);
+                    case Statics.FeedTypeEnum.Channel:
+                        string[] visibilitiesStringsArr = JsonSerializer.Deserialize<string[]>(
+                            data.RootElement.GetProperty("visibilitiesArr")).ToArray();
+                        string channelUrl = data.RootElement.GetProperty(nameof(channelUrl)).ToString();
+                        VideoVisibilityEnum[] visibilitiesArr = new VideoVisibilityEnum[visibilitiesStringsArr.Length];
+                        for (int i = 0; i < visibilitiesStringsArr.Length; i++)
+                        {
+                            visibilitiesArr[i] = (VideoVisibilityEnum)Enum.Parse(typeof(VideoVisibilityEnum), visibilitiesStringsArr[i]);
+                        }
+                        User curUser = await _userService.GetUserByUrlAsync(User.Identity.Name);
+                        videos = _updateDataService.GetVideosAsync(Statics.VideosOnPage, nextPage,
+                            false, visibilitiesArr.Length == 0 ? null : visibilitiesArr, channelUrl)
+                            .Result.ToFormattedVideos(curUser);
+                        break;
+                    default:
+                        videos = new List<FormattedVideo>();
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                throw;
+            }
 
-			return View(feedVM);
-		}
 
-		[HttpPost]
-		public async Task<IActionResult> AppendToLibray([FromBody] JsonDocument data)
-		{
-			int daysTake = Convert.ToInt32(data.RootElement.GetProperty("daysTake").ToString());
-			int daysSkip = Convert.ToInt32(data.RootElement.GetProperty("daysSkip").ToString());
-			List<Video> videos = await _videoService.GetLastVideos(daysTake, daysSkip, User.Identity.Name);
-			FeedVM feedVM = new FeedVM() { FeedType = Statics.FeedTypeEnum.Library };
+            FeedVM feedVM = new FeedVM()
+            {
+                Videos = videos,
+                FeedType = feedType
+            };
+            return PartialView("_Videos", feedVM);
+        }
 
-			foreach (Video video in videos)
-			{
-				feedVM.Videos.Add(
-					new FormattedVideo(video,
-						await _userService.GetUserByUrlAsync(User.Identity.Name)));
-			}
-			return PartialView("_Videos", feedVM);
-		}
+        public async Task<IActionResult> Search()
+        {
+            string searchString = "";
+            if (!String.IsNullOrEmpty(HttpContext.Request.Query[nameof(searchString)]))
+                searchString = HttpContext.Request.Query[nameof(searchString)].ToString().Replace('_', ' ');
+            TempData["SearchString"] = searchString;
+            SearchVM searchVM =
+                await _updateDataService.GetSearchResults(Statics.VideosOnPage / 2, 1, searchString,
+                    User.Identity.Name);
 
-		//[ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-		//public async Task<IActionResult> Error()
-		//{
-		//    return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-		//}
-	}
+            return View(searchVM);
+        }
+
+        public async Task<IActionResult> Library()
+        {
+            if (!User.Identity.IsAuthenticated)
+                return Redirect("/Home/Index");
+            List<FormattedVideo> videos =
+                await _updateDataService.GetLastVideos(1, 0, Statics.VideosOnPage, 1, User.Identity.Name);
+            FeedVM feedVM = new FeedVM()
+            {
+                FeedType = Statics.FeedTypeEnum.Library,
+                Videos = videos,
+            };
+            return View(feedVM);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AppendToLibrary([FromBody] JsonDocument data)
+        {
+            int daysTake = Convert.ToInt32(data.RootElement.GetProperty("daysTake").ToString());
+            int daysSkip = Convert.ToInt32(data.RootElement.GetProperty("daysSkip").ToString());
+            List<FormattedVideo> videos =
+                await _updateDataService.GetLastVideos(daysTake, daysSkip, Statics.VideosOnPage, 1, User.Identity.Name);
+            FeedVM feedVM = new FeedVM()
+            {
+                FeedType = Statics.FeedTypeEnum.Library,
+                Videos = videos,
+            };
+            return PartialView("_Videos", feedVM);
+        }
+
+        //[ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        //public async Task<IActionResult> Error()
+        //{
+        //    return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        //}
+    }
 }

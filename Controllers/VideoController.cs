@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Newtonsoft.Json.Linq;
 using System.Text.Json;
 using VideoStreamingService.Data.Services;
@@ -62,7 +63,7 @@ namespace VideoStreamingService.Controllers
             string url = "";
             if (!String.IsNullOrEmpty(HttpContext.Request.Query[nameof(url)]))
                 url = HttpContext.Request.Query[nameof(url)];
-            Video video = await _videoService.VideoByUrlAsync(url);
+            Video video = await _videoService.VideoByUrlMinInfoAsync(url);
             if (video.User.Url == User.Identity.Name || User.IsInRole(RoleEnum.Developer.ToString()))
                 return View("Edit", video);
             else
@@ -79,7 +80,7 @@ namespace VideoStreamingService.Controllers
             string url = "";
             if (!String.IsNullOrEmpty(HttpContext.Request.Query[nameof(url)]))
                 url = HttpContext.Request.Query[nameof(url)];
-            Video video = await _videoService.VideoByUrlAsync(url);
+            Video video = await _videoService.VideoByUrlFullInfoAsync(url);
 
             List<int> resolutions = new List<int>() { 240 };
             if (video.Resolution >= 480)
@@ -116,6 +117,24 @@ namespace VideoStreamingService.Controllers
                 _userService.SaveScreenWidth(User.Identity.Name, wideVideo == "true");
             }
 			return new EmptyResult();
+		}
+
+		[HttpPost]
+		public async Task<IActionResult> SendComment([FromBody] JsonDocument data)
+		{
+			string url = data.RootElement.GetProperty("url").ToString();
+			string message = data.RootElement.GetProperty("message").ToString();
+			Comment comment = await _videoService.AddComment(url, User.Identity.Name, message);
+			return PartialView("_Comment", comment);
+		}
+
+		[HttpPost]
+		public async Task<IActionResult> UpdateComment([FromBody] JsonDocument data)
+		{
+			long commentId = Convert.ToInt64(data.RootElement.GetProperty(nameof(commentId)).ToString());
+			string message = data.RootElement.GetProperty(nameof(message)).ToString();
+            await _videoService.UpdateComment(commentId, message);
+            return Ok();
 		}
 
 

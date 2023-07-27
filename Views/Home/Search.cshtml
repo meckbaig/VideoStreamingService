@@ -10,34 +10,22 @@
 }
 
 <div class="container-fluid my-4 col-12 col-lg-8 col-xl-7 col-xxl-6" style="max-width:900px">
-    <div class="row">
+    <div class="row" id="videosContainer">
         @if (Model.SearchElements.Count == 0)
         {
             <h1 class="display-4 text-center">Ничего не найдено</h1>
         }
-        else foreach (var searchElement in Model.SearchElements)
+        else
         {
-            @if (searchElement.GetType() == typeof(UserChannel))
-            {
-                UserChannel c = searchElement as UserChannel;
-                <div id="container_@c.Id" class="rounded mb-3 w-75 mx-auto">
-                    <div class="d-flex align-items-center">
-                        <img src="data:image/jpeg;base64,@c.Image" class="rounded-circle p-0 my-0 me-3 me-md-4"
-                        style="aspect-ratio: 1/1;max-height:128px;max-width:128px">
-                        <div>
-                            <a class="h4 text-decoration-none crop-text-1 text-reset" href="~/@c.Url">@c.Name</a>
-                            <button onclick="changeSubscription(event)" channelUrl="@c.Url" subed="True"
-                                class="btn btn-outline-secondary mb-2" style="width:190px;">Подписка оформлена</button>
-                            <p id="subCount_@c.Url" class="mb-2" title="@c.LongSubsString()">@c.SubsString()</p>
-                        </div>
-                    </div>
-                </div>
-            }
-            else if (searchElement.GetType() == typeof(FormattedVideo))
-            {
-                FormattedVideo formattedVideo = searchElement as FormattedVideo;
-	            @await Html.PartialAsync("_VideoHorizontal", formattedVideo)
-            }
+            @await Html.PartialAsync("_SearchResults", Model)
         }
     </div>
 </div>
+
+<script src="~/js/subscription.js"></script>
+<script src="~/js/videosOnScroll.js"></script>
+<script type="text/javascript">
+    var MaxVideoPages = @Statics.MaxVideoPages;
+    var FeedType = "@ViewData["FeedType"]";
+    var SearchString = "@Model.SearchString";
+</script>

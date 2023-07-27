@@ -4,7 +4,7 @@
 <div id="container_@Model.Url" class="d-flex align-items-center rounded mb-3">
 	<div class="position-relative col-7 col-md-6 to-hover">
 		<a href="~/Video/watch?url=@Model.Url">
-			<img id="@Model.Url" class="rounded-3 preview" style="aspect-ratio: 16/9" src="~/Videos/@Model.Url/@(Model.Thumbnail).jpg" onerror="this.src='/thumbnail.jpg'" loading="lazy">
+			<img id="@Model.Url" class="rounded-3 preview" style="aspect-ratio: 16/9" src="~/Videos/@Model.Url/@(Model.Thumbnail).jpg" onerror="this.src='/thumbnail.jpg'" loading="lazy" lazy>
 			<p class="badge position-absolute bottom-0 start-0 bg-dark text-wrap opacity-75" style="margin:6px">@Model.LengthString</p>
 			<p class="badge position-absolute bottom-0 end-0 bg-dark text-wrap opacity-75" style="margin:6px">@Model.ResolutionString</p>
 

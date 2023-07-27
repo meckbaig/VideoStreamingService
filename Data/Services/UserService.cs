@@ -182,28 +182,5 @@ namespace VideoStreamingService.Data.Services
 				return BitConverter.ToString(hashBytes).Replace("-", String.Empty);
 			}
 		}
-
-        public async Task<List<UserChannel>> SearchUsersAsync(string searchText, string curUserUrl)
-        {
-			User curUser = await GetUserByUrlAsync(curUserUrl);
-			List<User> users = _context.Users.Include(u => u.Subscribers.Where(s => s.Sub_Ignore == true)).ToList();
-			List<UserChannel> channels = new List<UserChannel>();
-			List<Task> tasks = new List<Task>();
-
-			foreach (User user in users)
-			{
-				var task = new Task(() =>
-				{
-					UserChannel userChannel = new UserChannel(user, curUser);
-					userChannel.DiceCoefficient = Statics.DiceCoefficient(searchText, userChannel.Name)+0.0001;
-					if(userChannel.DiceCoefficient > 0)
-						channels.Add(userChannel);
-				});
-				task.Start();
-				tasks.Add(task);
-            }
-			await Task.WhenAll(tasks);
-            return channels;
-        }
     }
 }

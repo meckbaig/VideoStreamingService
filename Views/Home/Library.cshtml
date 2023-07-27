@@ -20,37 +20,45 @@
 	{
 		<p class="h3 mb-3">Сутки</p>
 	}
-	@await Html.PartialAsync("_Videos", Model)
+	<div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 row-cols-xxl-6">
+		@await Html.PartialAsync("_Videos", Model)
+	</div>
 </div>
 <button id="buttonNext" class="btn btn-secondary mx-2 px-5 align-self-center" onclick="loadMore(event)">Далее</button>
-
-
 
 <script type="text/javascript">
 	var daysDescription = ["Сутки", "Неделя", "Месяц", "2 месяца", "3 месяца", "4 месяца", "5 месяцев", "Пол года"]
 	var days = [0, 1, 7, 30, 60, 90, 120, 150, 180];
 	var i = 1;
-
+    MaxVideoPages = @Statics.MaxVideoPages;
+    FeedType = "@Model.FeedType.ToString()";
+	DaysTake = days[i+1];
+	DaysSkip = days[i];
 
 	function loadMore(event){
 		if(i>=days.length-2){
 			event.currentTarget.parentNode.removeChild(event.currentTarget);
-		};
+		}
 		$.ajax({
 			type: 'POST',
-			url: "/Home/AppendToLibray",
-			data: JSON.stringify({ daysSkip: days[i++], daysTake: days[i] }),
+			url: "/Home/AppendToLibrary",
+			data: JSON.stringify({ daysSkip: days[i], daysTake: days[++i] }),
 			cache: false,
 			contentType: "application/json",
 			processData: false,
 			success: function (result) {
-				$("#videosContainer").append('<p class="h3 mb-3">' + daysDescription[i-1] + '</p>');
-				$("#videosContainer").append(result);
+				$("#videosContainer").append('<p class="h3 mb-3">' + daysDescription[i - 1] + '</p>');
+				$("#videosContainer").append('<div id="container_' + days[i] + days[i-1] + '" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 row-cols-xxl-6">'+result+'</div>');
 				if (document.getElementById("message") != null){
 					document.getElementById("message").parentNode.removeChild(document.getElementById("message"));
 				}
 				refreshPrevOver();
+				DaysTake = days[i];
+				DaysSkip = days[i-1];
+				ContainerId = 'container_' + days[i] + days[i-1];
+				refreshPages();
 			}
         });
 	}
 </script>
+<script src="~/js/videosOnScroll.js"></script>

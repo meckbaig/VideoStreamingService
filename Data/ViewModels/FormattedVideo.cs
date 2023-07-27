@@ -13,7 +13,7 @@ namespace VideoStreamingService.Data.ViewModels
         public string UploadDateString { get; set; }
         public DateTime ViewDate { get; set; }
         public string ViewDateString { get; set; }
-        public double? DiceCoefficient { get; set; }
+        public float? SorensenDiceCoefficient { get; set; }
 
         public bool? Like { get; set; }
 

@@ -97,7 +97,8 @@ namespace VideoStreamingService.Controllers
 		{
 			string url = data.RootElement.GetProperty("Id").ToString();
 			CancellationTokenSource cts = Statics.GetToken($"{User.Identity.Name}{url}", Statics.TokenType.Stream);
-			cts.Cancel();
+			if(cts != null)
+				cts.Cancel();
 		}
 	}
 }

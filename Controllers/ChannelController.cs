@@ -9,12 +9,14 @@ namespace VideoStreamingService.Controllers
 	public class ChannelController : Controller
 	{
 		private readonly IVideoService _videoService;
-		private readonly IUserService _userService;
+        private readonly IUserService _userService;
+        private readonly IUpdateDataService _updateDataService;
 
-		public ChannelController(IVideoService videoService, IUserService userService)
+        public ChannelController(IVideoService videoService, IUserService userService, IUpdateDataService updateDataService)
 		{
 			_videoService = videoService;
 			_userService = userService;
+            _updateDataService = updateDataService;
 		}
 
         [Route("{url}")]
@@ -24,7 +26,8 @@ namespace VideoStreamingService.Controllers
 			UserChannel channelVM = new UserChannel(
                 await _userService.GetChannelByUrlAsync(url),
                 await _userService.GetUserByUrlAsync(User.Identity.Name),
-                await _videoService.GetVideosAsync(Statics.VideosOnPage, 1, false, new []{ VideoVisibilityEnum.Visible }, url));
+                await _updateDataService.GetVideosAsync(Statics.VideosOnPage, 1, false, 
+                    new []{ VideoVisibilityEnum.Visible }, url));
             return View(channelVM);
         }
 
@@ -34,7 +37,7 @@ namespace VideoStreamingService.Controllers
         {
             var url_sub_split = url_sub.Split('_');
             string url = url_sub_split[0];
-            bool? sub = url_sub_split[1] == "True" ? null : true;
+            bool? sub = url_sub_split[1] == "true" ? null : true;
 
             await _userService.ChangeSubscription(url, User.Identity.Name, sub);
 
@@ -44,19 +47,18 @@ namespace VideoStreamingService.Controllers
         }
 
         //[HttpPost]
-        [Route("GetVideos/{url_roles}")]
-        public async Task<IActionResult> GetVideos(string url_roles)
+        [Route("LoadVideos/{url_roles}")]
+        public async Task<IActionResult> LoadVideos(string url, int page, string roles)
         {
-            List<string> roles_split = url_roles.Split('_').ToList();
-            string url = roles_split[0];
-            roles_split.RemoveAt(0);
-            VideoVisibilityEnum[]? enums = new VideoVisibilityEnum[roles_split.Count];
-            for (int i = 0; i < roles_split.Count; i++)
+            List<string> rolesSplit = roles.Remove(0, 1).Split('_').ToList();
+            VideoVisibilityEnum[]? enums = new VideoVisibilityEnum[rolesSplit.Count];
+            for (int i = 0; i < rolesSplit.Count; i++)
             {
-                enums[i] = (VideoVisibilityEnum)Enum.Parse(typeof(VideoVisibilityEnum), roles_split[i]);
+                enums[i] = (VideoVisibilityEnum)Enum.Parse(typeof(VideoVisibilityEnum), rolesSplit[i]);
             }
 
-            List<Video> videos = await _videoService.GetVideosAsync(Statics.VideosOnPage, 1, false, enums.Length == 0 ? null : enums, url);
+            List<Video> videos = await _updateDataService.GetVideosAsync(Statics.VideosOnPage, page,
+                false, enums.Length == 0 ? null : enums, url);
 
 			User curUser = await _userService.GetUserByUrlAsync(User.Identity.Name);
 

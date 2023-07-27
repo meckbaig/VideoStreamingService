@@ -19,6 +19,5 @@ namespace VideoStreamingService.Data.Services
         Task SaveScreenWidth(string userUrl, bool wide);
         Task<User> SaveUserAsync(EditUserVM user, string[] props);
         Task<string> ChangeThumbnail(string userUrl, IFormFile file);
-        Task<List<UserChannel>> SearchUsersAsync(string searchText, string curUserUrl);
     }
 }

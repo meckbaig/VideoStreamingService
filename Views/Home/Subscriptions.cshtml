@@ -16,11 +16,13 @@
 		{
 			<div id="container_@c.Id" class="rounded mb-2">
 				<div class="d-flex align-items-center">
-					<img src="data:image/jpeg;base64,@c.Image" class="rounded-circle p-3 p-md-0 my-0 my-md-3 me-2 me-md-4" style="aspect-ratio: 1/1;max-height:96px;max-width:96px">
+					<a href="~/@c.Url">
+						<img src="data:image/jpeg;base64,@c.Image" class="rounded-circle p-3 p-md-0 my-0 my-md-3 me-2 me-md-4"
+							 style="aspect-ratio: 1/1;max-height:96px;max-width:96px">
+					</a>
 					<div>
-								<a class="h4 text-decoration-none crop-text-1 text-reset" href="~/@c.Url">@c.Name</a>
-								<button onclick="changeSubscription(event)" channelUrl="@c.Url" subed="True" class="btn btn-outline-secondary mb-2" style="width:190px;">Подписка оформлена</button>
-						
+						<a class="h4 text-decoration-none crop-text-1 text-reset" href="~/@c.Url">@c.Name</a>
+						<button channelUrl="@c.Url" subed="@c.Subed.ToString().ToLower()" class="btn btn-success mb-2 sub-btn" style="width:190px;">Подписаться</button>
 						<p id="subCount_@c.Url" class="mb-2" title="@c.LongSubsString()">@c.SubsString()</p>
 					</div>
 				</div>
@@ -30,74 +32,5 @@
 </div>
 
 
-<script type="text/javascript">
-	function changeSubscription(event) {
-        var target = event.currentTarget;
-		var subUrl = "/Subscribe/" + target.getAttribute("channelUrl")+"_"+target.getAttribute("subed");
-		$.ajax({
-			type: 'POST',
-			url: subUrl,
-			contentType: false,
-			processData: false,
-			success: function (subsCount) {
-				if (subsCount < 1000) {
-					var subCount = document.getElementById('subCount_' + target.getAttribute("channelUrl"));
-					subCount.textContent = subsCount + subsString(subsCount);
-				}
 
-			}
-		});
-		subButtonToggle(target);
-	};
-
-	function subsString(subsCount) {
-		switch (subsCount % 10) {
-			case 1: return " подписчик";
-			case 2:
-			case 3:
-			case 4:
-				return " подписчика";
-			default: return " подписчиков"
-		};
-	};
-
-	function subButtonToggle(target) {
-		target.classList.toggle("btn-success");
-		target.classList.toggle("btn-outline-secondary");
-		buttonHover(target);
-		if (target.getAttribute("subed") == 'False') {
-			target.setAttribute("subed", 'True');
-			target.textContent = 'Подписка оформлена';
-			//target.onmouseover = () => {
-			//	target.textContent = 'Отписаться';
-			//}
-			//target.onmouseout = () => {
-			//	target.textContent = 'Подписка оформлена';
-			//}
-		}
-		else {
-			target.setAttribute("subed", 'False');
-			target.textContent = 'Подписаться';
-			//target.onmouseout = null;
-			//target.onmouseover = null;
-		}
-	}
-
-	function buttonHover(target){
-		if (target==null)
-			target = target.currentTarget;
-		if (target.getAttribute("subed") == 'False') {
-			target.onmouseover = () => {
-				target.textContent = 'Отписаться';
-			}
-			target.onmouseout = () => {
-				target.textContent = 'Подписка оформлена';
-			}
-		}
-		else {
-			target.onmouseout = null;
-			target.onmouseover = null;
-		}
-	}
-
-</script>
+<script src="~/js/subscription.js"></script>

@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Diagnostics;
-using System.Globalization;
 using System.Security.Claims;
 using VideoStreamingService.Data.Base;
 using VideoStreamingService.Data.ViewModels;
@@ -30,7 +30,7 @@ namespace VideoStreamingService.Data.Services
 				{
 					url += Statics.UrlChars[new Random().Next(0, Statics.UrlChars.Length)];
 				}
-				if (await VideoByUrlAsync(url) == null)
+				if (await VideoByUrlMinInfoAsync(url) == null)
 					unique = true;
 				else
 					url = "";
@@ -152,7 +152,15 @@ namespace VideoStreamingService.Data.Services
 			}
 		}
 
-		public async Task<Video> VideoByUrlAsync(string url)
+		public async Task<Video> VideoByUrlMinInfoAsync(string url)
+		{
+			Video video = await _context.Videos
+				.Include(v => v.User)
+				.FirstOrDefaultAsync(v => v.Url == url);
+			return video;
+		}
+
+		public async Task<Video> VideoByUrlFullInfoAsync(string url)
 		{
 			Video video = await _context.Videos
 				.Include(v => v.User)
@@ -161,105 +169,18 @@ namespace VideoStreamingService.Data.Services
 				.Include(v => v.Views)
 				.Include(v => v.Visibility)
 				.AsNoTracking().FirstOrDefaultAsync(v => v.Url == url);
+			//var comments = _context.Comments.ToList();
+			//List<Comment> comments = _context.Comments.FromSqlRaw($"SELECT * FROM COMMENTS WHERE VideoUrl = '{url}'").ToHashSet().ToList();
+			video.Comments = _context.Comments
+				.Include(c => c.User).AsNoTracking()
+				.Where(c => c.VideoUrl == url).OrderByDescending(c => c.Id).ToList();
 			return video;
-		}
-
-		public async Task<List<Video>> GetVideosAsync(int? amount = null, int? page = null, bool? shuffle = null,
-			VideoVisibilityEnum[]? enums = null, string? userUrl = null)
-		{
-			try
-			{
-				List<Video> list = await _context.Videos
-					.Include(u => u.User)
-					.Include(u => u.Views)
-					.Include(u => u.Visibility)
-					.ToListAsync();
-
-				if (userUrl != null)
-					list = list.Where(v => v.User.Url == userUrl).ToList();
-
-				if (enums != null)
-				{
-					List<Video> newList = new List<Video>();
-					foreach (VideoVisibilityEnum @enum in enums)
-					{
-						newList.AddRange(list.Where(v => v.Visibility == @enum));
-					}
-					list = newList;
-				}
-				if (shuffle != null)
-				{
-					if ((bool)shuffle)
-						list = Statics.Shuffle(list);
-					else
-						list = list.OrderByDescending(v => v.Uploaded).ToList();
-				}
-
-				return list;
-			}
-			catch (Exception)
-			{
-				return new List<Video>();
-			}
-		}
-
-		public async Task<List<Video>> GetLastVideos(int daysTake, int daysSkip, string userUrl)
-		{
-			DateTime take = DateTime.Now.AddDays(-daysTake);
-			DateTime skip = DateTime.Now.AddDays(-daysSkip);
-			User curUser = _context.Users.Include(u => u.Subscriptions)
-				.FirstOrDefault(u => u.Url == userUrl);
-			List<Subscription> subsList = curUser.Subscriptions.ToList();
-
-			List<Video> videosList = new List<Video>();
-			foreach (Subscription sub in subsList)
-			{
-				User user = _context.Users
-					.Include(u => u.Subscribers.Where(s => s.Sub_Ignore == true))
-					.Include(u => u.Videos).ThenInclude(v => v.Views)
-					.Include(u => u.Videos).ThenInclude(v => v.Visibility)
-					.FirstOrDefault(u => u.Id == sub.ToUserId);
-
-				videosList.AddRange(user.Videos.Where(v =>
-					v.Uploaded <= skip && v.Uploaded > take
-					&& v.Visibility.Name == VideoVisibilityEnum.Visible.ToString()));
-			}
-			videosList = videosList.OrderByDescending(v => v.Uploaded).ToList();
-
-			return videosList;
-		}
-
-		public async Task<List<FormattedVideo>> GetViewsHistory(int amount, int page, string curUserUrl)
-		{
-			User curUser = _context.Users.Include(u => u.Role).FirstOrDefault(u => u.Url == curUserUrl);
-
-			List<Video> vlist = await _context.Videos
-				.Include(u => u.User)
-				.Include(u => u.Views)
-				.Include(u => u.Visibility)
-				.Where(v => v.Views.FirstOrDefault(v => v.UserId == curUser.Id) != null
-					&& (v.Visibility.Name != VideoVisibilityEnum.Hidden.ToString() || v.UserId == curUser.Id))
-				.Take(amount).Skip((page - 1) * amount)
-				.OrderByDescending(v => v.Views.FirstOrDefault(v => v.UserId == curUser.Id).Date)
-				.ToListAsync();
-
-			//var list = _context.Users.FirstOrDefault(u => u.Url == curUserUrl).Views
-			//	.OrderByDescending(v => v.Date).Select(v => new { v.Video, v.Date })
-			//	.Take(amount).Skip((page - 1) * amount).ToList();
-
-			List<FormattedVideo> fv = new List<FormattedVideo>();
-			foreach (var video in vlist)
-			{
-				fv.Add(new FormattedVideo(video, curUser));
-			}
-
-			return fv;
 		}
 
 		public async Task AddViewAsync(string url, ClaimsPrincipal principal)
 		{
 			User user = await _userService.GetUserByUrlAsync(principal.Identity.Name);
-			Video video = await VideoByUrlAsync(url);
+			Video video = await VideoByUrlMinInfoAsync(url);
 			View view = _context.Views.FirstOrDefault(v => v.UserId == user.Id && v.VideoUrl == video.Url);
 			if (view != null)
 			{
@@ -293,7 +214,6 @@ namespace VideoStreamingService.Data.Services
 				}
 				else
 					_context.Reactions.Remove(newReaction);
-
 			}
 			else if (doneUndone)
 			{
@@ -316,33 +236,40 @@ namespace VideoStreamingService.Data.Services
 			return video.Reactions.FirstOrDefault(r => r.UserId == user.Id)?.Like;
 		}
 
-		public async Task<List<FormattedVideo>> SearchVideosAsync(string searchText, string curUserUrl)
+		public async Task<Comment> AddComment(string videoUrl, string userUrl, string message)
 		{
-			User curUser = await _userService.GetUserByUrlAsync(curUserUrl);
-			List<Video> videoList = await GetVideosAsync(enums: new[] { VideoVisibilityEnum.Visible });
-			//videoList = videoList.Where(v => v.Title.Contains(searchText, StringComparison.CurrentCultureIgnoreCase)).ToList();
-			List<FormattedVideo> formattedVideos = new List<FormattedVideo>();
-			List<Task> tasks = new List<Task>();
-
-			foreach (Video video in videoList)
+			User curUser = await _userService.GetUserByUrlAsync(userUrl);
+			Video video = await VideoByUrlMinInfoAsync(videoUrl);
+			message = message.Replace("\t", " ");
+			while (message.IndexOf("  ") >= 0)
 			{
-				var task = new Task(() =>
-				{
-					double dc1, dc2;
-					FormattedVideo formattedVideo = new FormattedVideo(video, curUser);
-                    dc1 = Statics.DiceCoefficient(searchText, video.Title);
-                    dc2 = Statics.DiceCoefficient(searchText, video.User.Name);
-					formattedVideo.DiceCoefficient = dc1 > dc2 ? dc1 : dc2;
-                    if (formattedVideo.DiceCoefficient > 0)
-						formattedVideos.Add(formattedVideo);
-				});
-				tasks.Add(task);
-                tasks.Last().Start();
-
-            }
-			await Task.WhenAll(tasks);
-            return formattedVideos;
+				message = message.Replace("  ", " ");
+			}
+			Comment comment = new Comment
+			{
+				Video = video,
+				User = curUser,
+				Message = message.Trim(),
+			};
+			await _context.AddAsync(comment);
+			await _context.SaveChangesAsync();
+			return comment;
 		}
 
-    }
+		public async Task UpdateComment(long commentId, string message)
+		{
+			if (!string.IsNullOrEmpty(message))
+			{
+				message = message.Replace("\t", " ");
+				while (message.IndexOf("  ") >= 0)
+				{
+					message = message.Replace("  ", " ");
+				}
+				message = message.Trim();
+				await _context.Database.ExecuteSqlAsync($"UPDATE COMMENTS SET Message = {message} WHERE Id = {commentId}");
+			}
+			else
+				await _context.Database.ExecuteSqlAsync($"DELETE FROM COMMENTS WHERE Id = {commentId}");
+		}
+	}
 }

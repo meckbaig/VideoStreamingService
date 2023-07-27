@@ -14,13 +14,12 @@ namespace VideoStreamingService.Data.Services
         Task SaveVideoAsync(Video video, CancellationToken ct, string[] props);
         Task<bool> DeleteVideo(Video video);
         Task DeleteDirectory(string path);
-        Task<List<Video>> GetVideosAsync(int? amount, int? page, bool? shuffle = false, VideoVisibilityEnum[]? enums = null, string? userUrl = null);
-        Task<List<Video>> GetLastVideos(int daysTake, int daysSkip, string userUrl);
-		Task<List<FormattedVideo>> GetViewsHistory(int amount, int page, string curUserUrl);
-		Task<Video> VideoByUrlAsync(string url);
-        Task AddViewAsync(string url, ClaimsPrincipal principal);
+		Task<Video> VideoByUrlMinInfoAsync(string url);
+        Task<Video> VideoByUrlFullInfoAsync(string url);
+		Task AddViewAsync(string url, ClaimsPrincipal principal);
         Task EditReaction(string videoId, string userUrl, bool reaction, bool doneUndone);
         Task<bool?> GetReaction(Video video, string userUrl);
-        Task<List<FormattedVideo>> SearchVideosAsync(string searchText, string curUserUrl);
-    }
+        Task<Comment> AddComment(string videoUrl, string userUrl, string message);
+		Task UpdateComment(long commentId, string message);
+	}
 }

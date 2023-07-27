@@ -10,7 +10,7 @@ namespace VideoStreamingService.Data.ViewModels
         public bool Subed { get; set; } = false;
         public bool Ignored { get; set; } = false;
 		public bool OwnChanel { get; set; } = false;
-        public double? DiceCoefficient { get; set; }
+        public float? SorensenDiceCoefficient { get; set; }
         public long? MaxResults { get => Subscribers.Count; }
         public FeedVM FeedVM { get; set; } = new FeedVM() { FeedType = Statics.FeedTypeEnum.Channel };
 		public UserChannel(User user, User curUser, List<Video> videos = null)

@@ -24,11 +24,15 @@ namespace VideoStreamingService.Data
             modelBuilder.Entity<View>().HasOne(v => v.User).WithMany(u => u.Views).HasForeignKey(v => v.UserId);
             modelBuilder.Entity<View>().HasOne(v => v.Video).WithMany(v => v.Views).HasForeignKey(v => v.VideoUrl);
 
-            modelBuilder.Entity<Subscription>().HasKey(s => new { s.FromUserId, s.ToUserId });
-            modelBuilder.Entity<Subscription>().HasOne(s => s.FromUser).WithMany(u => u.Subscriptions).HasForeignKey(s => s.FromUserId);
-            modelBuilder.Entity<Subscription>().HasOne(s => s.ToUser).WithMany(u => u.Subscribers).HasForeignKey(s => s.ToUserId);
+			modelBuilder.Entity<Subscription>().HasKey(s => new { s.FromUserId, s.ToUserId });
+			modelBuilder.Entity<Subscription>().HasOne(s => s.FromUser).WithMany(u => u.Subscriptions).HasForeignKey(s => s.FromUserId);
+			modelBuilder.Entity<Subscription>().HasOne(s => s.ToUser).WithMany(u => u.Subscribers).HasForeignKey(s => s.ToUserId);
 
-            base.OnModelCreating(modelBuilder);
+			modelBuilder.Entity<Comment>().HasKey(v => new { v.UserId, v.VideoUrl });
+			modelBuilder.Entity<Comment>().HasOne(v => v.User).WithMany(u => u.Comments).HasForeignKey(v => v.UserId);
+			modelBuilder.Entity<Comment>().HasOne(v => v.Video).WithMany(v => v.Comments).HasForeignKey(v => v.VideoUrl);
+
+			base.OnModelCreating(modelBuilder);
 		}
 
 
@@ -41,5 +45,6 @@ namespace VideoStreamingService.Data
         public DbSet<View> Views { get; set; }
         public DbSet<Subscription> Subscriptions { get; set; }
         public DbSet<VideoVisibility> VideoVisibility { get; set; }
+		public DbSet<Comment> Comments { get; set; }
     }
 }

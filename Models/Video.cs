@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Xml.Linq;
 using VideoStreamingService.Data;
 using VideoStreamingService.Data.Base;
 using VideoStreamingService.Data.ViewModels;
@@ -27,6 +28,9 @@ namespace VideoStreamingService.Models
 		
 		public List<Reaction> Reactions { get; set; } = new List<Reaction>(); 
 		public List<View> Views { get; set; } = new List<View>();
+		public virtual List<Comment> Comments { get; set; } = new HashSet<Comment>().ToList();
+		//public virtual List<Video_Comment> Video_Comments { get; set; } = new List<Video_Comment>();
 		public List<Video_Category> Video_Categories { get; set; } = new List<Video_Category>();
+
 	}
 }

@@ -8,6 +8,6 @@ namespace VideoStreamingService.Data.ViewModels
     public class SearchVM
     {
         public List<ISearchElement> SearchElements = new List<ISearchElement>();
-		
+		public string SearchString { get; set; }
 	}
 }

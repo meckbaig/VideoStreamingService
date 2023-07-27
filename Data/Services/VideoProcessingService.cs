@@ -146,7 +146,7 @@ namespace VideoStreamingService.Data.Services
         private async Task<Video> AddVideoInfo(IMediaInfo mediaInfo, string output) // Добавляет длину и разрешение
 		{
 			string id = Path.GetFileName(Path.GetDirectoryName(output));
-			Video video = await _videoService.VideoByUrlAsync(id);
+			Video video = await _videoService.VideoByUrlMinInfoAsync(id);
 			video.Length = (short)mediaInfo.Duration.TotalSeconds;
 			video.Resolution = Convert.ToInt16(Path.GetFileNameWithoutExtension(output));
 

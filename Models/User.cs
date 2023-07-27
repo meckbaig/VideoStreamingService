@@ -28,6 +28,7 @@ namespace VideoStreamingService.Models
         public List<Reaction> Reactions { get; set; } = new List<Reaction>();
         public List<Subscription> Subscriptions { get; set; } = new List<Subscription>();
         public List<Subscription> Subscribers { get; set; } = new List<Subscription>();
-        public List<View> Views { get; set; } = new List<View>();
+		public List<Comment> Comments { get; set; } = new List<Comment>();
+		public List<View> Views { get; set; } = new List<View>();
     }
 }

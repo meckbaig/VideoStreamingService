@@ -2,7 +2,6 @@
 @using VideoStreamingService.Data.ViewModels;
 @model FeedVM;
 
-<div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 row-cols-xxl-6">
     @foreach (var v in Model.Videos)
     {
         <div id="container_@v.Url" class="col align-content-center rounded mb-2">
@@ -34,8 +33,8 @@
                 {
                     <li>
                         <div class="d-flex">
-                            <div style="font-size:15px" title="@v.LongViewsString()">@v.ViewsString()</div>
-                            <div style="font-size:15px" class="ms-auto"
+                            <div class="fs-6" title="@v.LongViewsString()">@v.ViewsString()</div>
+                            <div class="ms-auto fs-6"
 				                title="@(v.UploadDateString), @(v.Uploaded.ToString("t"))">
                                 @v.UploadDateString
                             </div>
@@ -105,4 +104,3 @@
             }
         }
     }
-</div>

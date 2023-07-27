@@ -18,14 +18,13 @@
 						<li class="nav-item col-auto">
 							@if (!Model.OwnChanel && !Model.Ignored)
 							{
-								<button id="subButton" onclick="changeSubscription()" class="btn btn-success mb-2" style="width:190px;">Подписаться</button>
+								<button  channelUrl="@Model.Url" subed="@Model.Subed.ToString().ToLower()" 
+                                class="btn btn-success sub-btn mb-2" style="width:190px;">Подписаться</button>
 							}
 						</li>
 					</ul>
-					<p id="subCount" class="mb-2" title="@Model.LongSubsString()">@Model.SubsString()</p>
-
+					<p id="subCount_@Model.Url" class="mb-2" title="@Model.LongSubsString()">@Model.SubsString()</p>
 				</div>
-				
 			</div>
 			
 			@if (Model.OwnChanel)
@@ -34,130 +33,62 @@
 					@foreach (VideoVisibilityEnum item in Enum.GetValues(typeof(VideoVisibilityEnum)))
 					{
 						<div class="pb-2 pe-2">
-							<input class="form-check-input" type="checkbox" value="@((int)item)" id="@item.ToString()" onclick="loadVideos()">
+							<input class="form-check-input" type="checkbox" value="@((int)item)" id="@item.ToString()" onclick="reloadVideos()">
 							<label class="form-check-label" for="@item.ToString()">@(item.GetEnumDisplayName())</label>
 						</div>
 					}
 				</div>
 			}
-			
         </div>
     </div>
-
-	<div id="_videos" class="mt-2">
-		@await Html.PartialAsync("_Videos", Model.FeedVM)
+	<div id="videosContainer" class="mt-2 row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 row-cols-xxl-6">
+	
 	</div>
 </div>
 
+<script src="~/js/videosOnScroll.js"></script>
+<script src="~/js/subscription.js"></script>
 <script type="text/javascript">
-	var subUrl = "/Subscribe/@(Model.Url)_@(Model.Subed)";
-	var enums = "_@(VideoVisibilityEnum.Visible)";
-	var enumsList = [];
-	if (@Model.Subed.ToString().ToLower()) {
-		subButtonToggle();
-	};
-
-	//window.onload = () => {
-		//$('#_videos').load("" + enums)
-		//loadVideos();
-	//}
-
-
-	function changeSubscription() {
-		$.ajax({
-			type: 'POST',
-			url: subUrl,
-			contentType: false,
-			processData: false,
-			success: function (subsCount) {
-				if (subsCount<1000){
-					var subCount = document.getElementById('subCount');
-					subCount.textContent = subsCount + subsString(subsCount);
-				}
-				
-			}
-		});
-		subButtonToggle();
-	};
-
-	function subsString(subsCount){
-		switch (subsCount%10) {
-			case 1: return " подписчик";
-			case 2: 
-			case 3: 
-			case 4: 
-				return " подписчика";
-			default: return " подписчиков"
+	VisibilitiesArr = ['@(VideoVisibilityEnum.Visible)'];
+    MaxVideoPages = @Statics.MaxVideoPages;
+    FeedType = "@Model.FeedVM.FeedType.ToString()";
+		window.onload = () => {
+			refreshPagesFrom(1);
 		};
-	};
-
-	function subButtonToggle() {
-		var subButton = document.getElementById('subButton');
-		subButton.classList.toggle("btn-success");
-		subButton.classList.toggle("btn-outline-secondary");
-		if (subButton.textContent == 'Подписаться') {
-			subButton.textContent = 'Подписка оформлена';
-            subButton.onmouseover = () =>{
-                subButton.textContent = 'Отписаться';
-            }
-            subButton.onmouseout = () => {
-                subButton.textContent = 'Подписка оформлена';
-            }
-			subUrl = "/Subscribe/@(Model.Url)_True";
-		}
-		else {
-			subButton.textContent = 'Подписаться';
-            subButton.onmouseout = null;
-            subButton.onmouseover = null;
-			subUrl = "/Subscribe/@(Model.Url)_False";
-		}
-	}
+	ChannelUrl = '@Model.Url';
 </script>
-
-
-
 @if (Model.OwnChanel)
 {
 	<script type="text/javascript">
+		let checkBoxes = [];
+		
 		window.onload = () => {
-			loadEnumsList();
-			@*loadEnums();*@
-			@*$('#_videos').load("/GetVideos/@(Model.Url)" + enums)*@
+			loadCheckBoxes();
+			refreshPagesFrom(1);
 		};
-
-		function loadVideos() {
-			loadEnums();
-			$('#_videos').load("/GetVideos/@(Model.Url)" + enums)
-
-			//var url = "/GetVideos/@(Model.Url)" + enums;
-			//$.ajax({
-			//	type: 'GET',
-			//	url: url,
-			//	contentType: false,
-			//	processData: false,
-			//	success: function (res) {
-			//		$("#videos").html(res);
-			//	}
-			//});
-		}
-	
-		function loadEnumsList() {
+		
+		function loadCheckBoxes() {
 			@foreach (VideoVisibilityEnum item in Enum.GetValues(typeof(VideoVisibilityEnum)))
 			{
-				@:enumsList.push(document.getElementById('@item.ToString()'));
+				@:checkBoxes.push(document.getElementById('@item.ToString()'));
 			}
-			enumsList[0].checked = true;
-		};
-	
+			checkBoxes[0].checked = true;
+			loadEnums();
+		}
+		
 		function loadEnums() {
-			enums = "";
-			for (let i = 0; i < enumsList.length; i++) {
-				if(enumsList[i].checked){
-					enums += "_" + enumsList[i].id;
+			VisibilitiesArr = [];
+			for (let i = 0; i < checkBoxes.length; i++) {
+				if(checkBoxes[i].checked){
+					VisibilitiesArr.push(checkBoxes[i].id);
 				}
 			}
-		};
+		}
+		
+		function reloadVideos() {
+			loadEnums();
+			document.getElementById('videosContainer').innerHTML = '';
+			refreshPagesFrom(1);
+		}
 	</script>
 }
-
-
