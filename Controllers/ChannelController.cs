@@ -2,7 +2,7 @@
 using VideoStreamingService.Data.ViewModels;
 using VideoStreamingService.Data.Services;
 using VideoStreamingService.Models;
-using System;
+using VideoStreamingService.Data;
 
 namespace VideoStreamingService.Controllers
 {
@@ -11,13 +11,16 @@ namespace VideoStreamingService.Controllers
 		private readonly IVideoService _videoService;
         private readonly IUserService _userService;
         private readonly IUpdateDataService _updateDataService;
+        private readonly IAppConfig _config;
 
-        public ChannelController(IVideoService videoService, IUserService userService, IUpdateDataService updateDataService)
+        public ChannelController(IVideoService videoService, IUserService userService,
+            IUpdateDataService updateDataService, IAppConfig appConfig)
 		{
 			_videoService = videoService;
 			_userService = userService;
             _updateDataService = updateDataService;
-		}
+            _config = appConfig;
+        }
 
         [Route("{url}")]
         public async Task<IActionResult> Index(string url)
@@ -26,7 +29,7 @@ namespace VideoStreamingService.Controllers
 			UserChannel channelVM = new UserChannel(
                 await _userService.GetChannelByUrlAsync(url),
                 await _userService.GetUserByUrlAsync(User.Identity.Name),
-                await _updateDataService.GetVideosAsync(Statics.VideosOnPage, 1, false, 
+                await _updateDataService.GetVideosAsync(_config.VideosOnPage, 1, false, 
                     new []{ VideoVisibilityEnum.Visible }, url));
             return View(channelVM);
         }
@@ -57,7 +60,7 @@ namespace VideoStreamingService.Controllers
                 enums[i] = (VideoVisibilityEnum)Enum.Parse(typeof(VideoVisibilityEnum), rolesSplit[i]);
             }
 
-            List<Video> videos = await _updateDataService.GetVideosAsync(Statics.VideosOnPage, page,
+            List<Video> videos = await _updateDataService.GetVideosAsync(_config.VideosOnPage, page,
                 false, enums.Length == 0 ? null : enums, url);
 
 			User curUser = await _userService.GetUserByUrlAsync(User.Identity.Name);

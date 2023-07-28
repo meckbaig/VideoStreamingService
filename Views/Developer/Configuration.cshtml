@@ -1,0 +1,76 @@
+﻿@using Xabe.FFmpeg
+@model VideoStreamingService.Data.ViewModels.AppConfigVM
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    ViewData["Title"] = "Администрирование";
+}
+
+<div class="row">
+    <div class="col-md-8 col-xxl-7 mx-auto">
+        <form asp-action="Configuration" method="post">
+            <div class="d-flex mb-3 gap-3 align-items-center">
+                <div class="d-flex flex-column align-items-center">
+                    <label for="uploadTnail" class="mb-2" style="cursor: pointer">
+                        <img src="data:image/jpeg;base64,@Model.DefaultProfilePicture" id="profilePicture" class="rounded-circle" style="aspect-ratio: 1/1;max-height:128px;max-width:128px;">
+                        <input type="file" id="uploadTnail" accept="image/*" onchange="uploadImage(event)" hidden/>
+                    </label>
+                    <input hidden="hidden" asp-for="DefaultProfilePicture" id="defaultProfilePictureInput"/>
+                    <label asp-for="DefaultProfilePicture" class="form-label"></label>
+                </div>
+                <div class="flex-fill">
+                    <div class="form-floating mb-3">
+                        <input asp-for="UrlChars" class="form-control"/>
+                        <label asp-for="UrlChars" class="form-label"></label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input asp-for="VideosOnPage" type="number" class="form-control"/>
+                        <label asp-for="VideosOnPage" class="form-label"></label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input asp-for="MaxVideoPages" type="number" class="form-control"/>
+                        <label asp-for="MaxVideoPages" class="form-label"></label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input asp-for="DefaultUrlLength" type="number" class="form-control"/>
+                        <label asp-for="DefaultUrlLength" class="form-label"></label>
+                    </div>
+                    <div class="input-group">
+                        <label asp-for="VideoCodec" class="input-group-text"></label>
+                        <select class="form-select" asp-for="VideoCodec">
+                            @foreach (VideoCodec codec in Enum.GetValues(typeof(VideoCodec)))
+                            {
+                                <option id="@codec.ToString()" value="@((int)codec)" 
+                                        selected="@(codec==Model.VideoCodec)">@codec.ToString()</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="m-2 d-flex justify-content-center gap-2 mx-auto">
+                <input class="btn btn-outline-success float-right" type="submit" value="Сохранить" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<script type="text/javascript">
+    var profilePicture = document.getElementById("profilePicture");
+    var defaultProfilePictureInput = document.getElementById("defaultProfilePictureInput");
+
+    function uploadImage(event) {
+        var formData = new FormData();
+        var file = event.currentTarget.files[0];
+        formData.append("file", file);
+        $.ajax({
+            type: 'POST',
+            url: '/api/FileApi/UploadDefaultProfilePicture',
+            contentType: false,
+            processData: false,
+            data: formData,
+            success: function (imageBase64) {
+                profilePicture.setAttribute("src", "data:image/jpeg;base64," + imageBase64)
+                defaultProfilePictureInput.value = imageBase64;
+            }
+        });
+    };
+</script>

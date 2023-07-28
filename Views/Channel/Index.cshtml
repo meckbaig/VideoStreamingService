@@ -1,5 +1,6 @@
 ﻿@using VideoStreamingService.Data.ViewModels;
-
+@using VideoStreamingService.Data
+@inject IAppConfig config;
 @model UserChannel;
 @{
     ViewData["Title"] = Model.Name;
@@ -50,7 +51,7 @@
 <script src="~/js/subscription.js"></script>
 <script type="text/javascript">
 	VisibilitiesArr = ['@(VideoVisibilityEnum.Visible)'];
-    MaxVideoPages = @Statics.MaxVideoPages;
+    MaxVideoPages = @config.MaxVideoPages;
     FeedType = "@Model.FeedVM.FeedType.ToString()";
 		window.onload = () => {
 			refreshPagesFrom(1);

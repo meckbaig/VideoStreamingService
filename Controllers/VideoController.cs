@@ -70,7 +70,7 @@ namespace VideoStreamingService.Controllers
 			{
 				TempData["Error"] = "Вы не обладаете правами для этого действия!"; 
                 if (string.IsNullOrEmpty(Request.Cookies["LastPage"]))
-                    return Redirect("/Home/Index");
+                    return Redirect("/");
                 return Redirect(Request.Cookies["LastPage"]);
             }
 		}
@@ -102,7 +102,7 @@ namespace VideoStreamingService.Controllers
             {
                 TempData["Error"] = "Доступ к видео ограничен!";
                 if (string.IsNullOrEmpty(Request.Cookies["LastPage"]))
-                    return Redirect("/Home/Index");
+                    return Redirect("/");
                 return Redirect(Request.Cookies["LastPage"]);
 
             }
@@ -198,7 +198,7 @@ namespace VideoStreamingService.Controllers
             video = await _videoProcessingService.AddVideoInfo(video, _appEnvironment.WebRootPath);
             await _videoService.SaveVideoAsync(video, cts.Token);
             if (string.IsNullOrEmpty(Request.Cookies["LastPage"]))
-                return Redirect("/Home/Index");
+                return Redirect("/");
             return Redirect(Request.Cookies["LastPage"]);
         }
 
@@ -208,7 +208,7 @@ namespace VideoStreamingService.Controllers
                 return View("Edit");
             _videoService.DeleteDirectory(Path.Combine(_appEnvironment.WebRootPath, "Videos", video.Url));
             if (string.IsNullOrEmpty(Request.Cookies["LastPage"]))
-                return Redirect("/Home/Index");
+                return Redirect("/");
             return Redirect(Request.Cookies["LastPage"]);
         }
     }

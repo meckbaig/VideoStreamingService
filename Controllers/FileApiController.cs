@@ -9,21 +9,22 @@ using Xabe.FFmpeg;
 namespace VideoStreamingService.Controllers
 {
     [Route("api/[controller]")]
-	[ApiController]
-	public class FileApiController : ControllerBase
-	{
-		private readonly IWebHostEnvironment _webEnvironment;
+    [ApiController]
+    public class FileApiController : ControllerBase
+    {
+        private readonly IWebHostEnvironment _webEnvironment;
         private readonly IUserService _userService;
         private readonly IVideoService _videoService;
         private readonly IVideoProcessingService _videoProcessingService;
 
-		public FileApiController(IWebHostEnvironment _environment, IUserService userService, IVideoService videoService, IVideoProcessingService videoProcessingService)
-		{
-			_webEnvironment = _environment;
+        public FileApiController(IWebHostEnvironment _environment, IUserService userService, IVideoService videoService,
+            IVideoProcessingService videoProcessingService)
+        {
+            _webEnvironment = _environment;
             _userService = userService;
-			_videoService = videoService;
-			_videoProcessingService = videoProcessingService;
-		}
+            _videoService = videoService;
+            _videoProcessingService = videoProcessingService;
+        }
 
         [Route("UploadVideo")]
         [HttpPost]
@@ -61,44 +62,53 @@ namespace VideoStreamingService.Controllers
             return Ok(true);
         }
 
-        [Route("UploadImage")]
+        [Route("ChangeProfilePicture")]
         [HttpPost]
         [RequestFormLimits(MultipartBodyLengthLimit = 2200000000)]
-        public async Task<IActionResult> UploadImage([FromForm] IFormFile file)
+        public async Task<IActionResult> ChangeProfilePicture([FromForm] IFormFile file)
         {
-            string image = await _userService.ChangeThumbnail(User.Identity.Name, file);
+            string image = await _userService.ChangeProfilePicture(file, User.Identity.Name);
+            return Ok(image);
+        }
+        
+        [Route("UploadDefaultProfilePicture")]
+        [HttpPost]
+        [RequestFormLimits(MultipartBodyLengthLimit = 2200000000)]
+        public async Task<IActionResult> UploadDefaultProfilePicture([FromForm] IFormFile file)
+        {
+            string image = await _userService.ChangeProfilePicture(file);
             return Ok(image);
         }
 
         [Route("GetVideo")]
-		public async Task <FileResult> GetVideo()
-		{
-			string url = "";
-			string quality = "";
-			if (!String.IsNullOrEmpty(HttpContext.Request.Query[nameof(url)]))
-				url = HttpContext.Request.Query[nameof(url)];
-			if (!String.IsNullOrEmpty(HttpContext.Request.Query[nameof(quality).ToString()]))
-				quality = HttpContext.Request.Query[nameof(quality)];
+        public async Task<FileResult> GetVideo()
+        {
+            string url = "";
+            string quality = "";
+            if (!String.IsNullOrEmpty(HttpContext.Request.Query[nameof(url)]))
+                url = HttpContext.Request.Query[nameof(url)];
+            if (!String.IsNullOrEmpty(HttpContext.Request.Query[nameof(quality).ToString()]))
+                quality = HttpContext.Request.Query[nameof(quality)];
 
-			string path = Path.Combine(_webEnvironment.WebRootPath, "Videos", url);
-			string input = Path.Combine(path, quality + ".mp4");
-			if (quality == "")
-			{
-				short res = await _videoProcessingService.GetMaxResolution(path);
+            string path = Path.Combine(_webEnvironment.WebRootPath, "Videos", url);
+            string input = Path.Combine(path, quality + ".mp4");
+            if (quality == "")
+            {
+                short res = await _videoProcessingService.GetMaxResolution(path);
                 input = Path.Combine(path, res + ".mp4");
-			}
+            }
 
-			Debug.WriteLine($"streaming {Path.GetFileNameWithoutExtension(input)}");
-			return PhysicalFile(input, "application/octet-stream", enableRangeProcessing: true);
-		}
+            Debug.WriteLine($"streaming {Path.GetFileNameWithoutExtension(input)}");
+            return PhysicalFile(input, "application/octet-stream", enableRangeProcessing: true);
+        }
 
-		[Route("ChangeVideo")]
-		public async Task ChangeVideo([FromBody] JsonDocument data)
-		{
-			string url = data.RootElement.GetProperty("Id").ToString();
-			CancellationTokenSource cts = Statics.GetToken($"{User.Identity.Name}{url}", Statics.TokenType.Stream);
-			if(cts != null)
-				cts.Cancel();
-		}
-	}
+        [Route("ChangeVideo")]
+        public async Task ChangeVideo([FromBody] JsonDocument data)
+        {
+            string url = data.RootElement.GetProperty("Id").ToString();
+            CancellationTokenSource cts = Statics.GetToken($"{User.Identity.Name}{url}", Statics.TokenType.Stream);
+            if (cts != null)
+                cts.Cancel();
+        }
+    }
 }

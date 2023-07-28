@@ -2,6 +2,7 @@
 @using static System.IO.Path;
 @using VideoStreamingService.Data.ViewModels;
 @using VideoStreamingService.Data.Services;
+@inject IAppConfig config;
 @model FeedVM;
 @{
     ViewData["Title"] = "Главная";
@@ -27,7 +28,7 @@ row-cols-md-3 row-cols-lg-4 row-cols-xl-5 row-cols-xxl-6">
 
 <script src="~/js/videosOnScroll.js"></script>
 <script type="text/javascript">
-    var MaxVideoPages = @Statics.MaxVideoPages;
+    var MaxVideoPages = @config.MaxVideoPages;
     var FeedType = "@Model.FeedType.ToString()";
     var UrlsArr = @Json.Serialize(ids);
 </script>

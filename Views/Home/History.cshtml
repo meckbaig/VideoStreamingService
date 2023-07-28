@@ -2,6 +2,7 @@
 @using static System.IO.Path;
 @using VideoStreamingService.Data.ViewModels;
 @using VideoStreamingService.Data.Services;
+@inject IAppConfig config;
 @model FeedVM;
 @{
     ViewData["Title"] = "История просмотра";
@@ -20,6 +21,6 @@
 </div>
 <script src="~/js/videosOnScroll.js"></script>
 <script type="text/javascript">
-    var MaxVideoPages = @Statics.MaxVideoPages;
+    var MaxVideoPages = @config.MaxVideoPages;
     var FeedType = "@Model.FeedType.ToString()";
 </script>

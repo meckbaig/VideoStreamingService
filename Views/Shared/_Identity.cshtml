@@ -10,7 +10,7 @@
 }
 else
 {
-
+	User curUser = await UserService.GetUserByUrlAsync(User.Identity.Name);
 	@*User profile section*@
 	<div class="d-flex align-items-end flex-row flex-nowrap gap-2 mw-100">
 		<div class="mw-100">
@@ -34,6 +34,17 @@ else
 						</button>
 					</form>
 				</li>
+				@if (curUser.Role == RoleEnum.Developer)
+				{
+					<li>
+						<form class="dropdown-item" method="get" asp-controller="Developer" asp-action="Configuration">
+							<button class="dropdown-item text-center">
+								Настройки<wbr>
+								сервиса
+							</button>
+						</form>
+					</li>
+				}
 				<li>
 					<form class="dropdown-item" asp-controller="User" asp-action="Logout">
 						<button class="dropdown-item text-center">

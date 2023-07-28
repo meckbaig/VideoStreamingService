@@ -18,6 +18,6 @@ namespace VideoStreamingService.Data.Services
         Task<string> GetTheme(string userUrl);
         Task SaveScreenWidth(string userUrl, bool wide);
         Task<User> SaveUserAsync(EditUserVM user, string[] props);
-        Task<string> ChangeThumbnail(string userUrl, IFormFile file);
+        Task<string> ChangeProfilePicture(IFormFile file, string userUrl = null);
     }
 }

@@ -43,7 +43,7 @@ namespace VideoStreamingService.Controllers
             Response.Cookies.Append("LastPage", Request.Headers["Referer"].ToString());
 			await HttpContext.SignOutAsync();
             if (string.IsNullOrEmpty(Request.Cookies["LastPage"]))
-                return Redirect("/Home/Index");
+                return Redirect("/");
             return Redirect(lp);
         }
 
@@ -80,7 +80,7 @@ namespace VideoStreamingService.Controllers
             Response.Cookies.Append("UserName", user.Name);
             Response.Cookies.Append("Theme", user.Theme);
             if (string.IsNullOrEmpty(Request.Cookies["LastPage"]))
-                return Redirect("/Home/Index");
+                return Redirect("/");
             return Redirect(Request.Cookies["LastPage"]);
         }
 
@@ -113,7 +113,7 @@ namespace VideoStreamingService.Controllers
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity));
 
             if (string.IsNullOrEmpty(Request.Cookies["LastPage"]))
-                return Redirect("/Home/Index");
+                return Redirect("/");
             return Redirect(Request.Cookies["LastPage"]);
         }
 
@@ -142,7 +142,7 @@ namespace VideoStreamingService.Controllers
 
 
             if (string.IsNullOrEmpty(Request.Cookies["LastPage"]))
-                return Redirect("/Home/Index");
+                return Redirect("/");
             return Redirect(Request.Cookies["LastPage"]);
         }
 

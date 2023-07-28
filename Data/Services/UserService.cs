@@ -13,9 +13,11 @@ namespace VideoStreamingService.Data.Services
 	public class UserService : IUserService
 	{
 		private readonly AppDbContext _context;
-		public UserService(AppDbContext context)
+		private readonly IAppConfig _config;
+		public UserService(AppDbContext context, IAppConfig appConfig)
 		{
 			_context = context;
+			_config = appConfig;
 		}
 
 		public string NameByUrl(string url)
@@ -98,14 +100,14 @@ namespace VideoStreamingService.Data.Services
 		public async Task CreateUserAsync(User user, string password)
 		{
 			user.Password = Hash(password);
-			user.Image = Statics.DefaultProfilePicture;
+			user.Image = _config.DefaultProfilePicture;
 			user.Role = _context.Roles.FirstOrDefault(r => r.Name == ((RoleEnum)user.RoleId).ToString());
 			bool unique = false;
 			while (!unique)
 			{
-				for (int i = 0; i < Statics.DefaultUrlLength; i++)
+				for (int i = 0; i < _config.DefaultUrlLength; i++)
 				{
-					user.Url += Statics.UrlChars[new Random().Next(0, Statics.UrlChars.Length)];
+					user.Url += _config.UrlChars[new Random().Next(0, _config.UrlChars.Length)];
 				}
 				if (await GetUserByUrlAsync(user.Url) == null)
 					unique = true;
@@ -157,7 +159,7 @@ namespace VideoStreamingService.Data.Services
 			_context.SaveChanges();
 		}
 
-		public async Task<string> ChangeThumbnail(string userUrl, IFormFile file)
+		public async Task<string> ChangeProfilePicture(IFormFile file, string userUrl = null)
 		{
 			await using var originalStream = new MemoryStream();
 			await using var squaredStream = new MemoryStream();
@@ -168,8 +170,11 @@ namespace VideoStreamingService.Data.Services
 
 			byte[] byteImage = squaredStream.ToArray();
 			string imgBase64 = Convert.ToBase64String(byteImage);
-			_context.Users.FirstOrDefault(u => u.Url == userUrl).Image = imgBase64;
-			_context.SaveChanges();
+			if (userUrl != null)
+			{
+				_context.Users.FirstOrDefault(u => u.Url == userUrl).Image = imgBase64; 
+				_context.SaveChanges();
+			}
 			return imgBase64;
 		}
 

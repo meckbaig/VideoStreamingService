@@ -12,10 +12,12 @@ namespace VideoStreamingService.Data.Services
 	{
 		private readonly AppDbContext _context;
 		private readonly IUserService _userService;
-		public VideoService(AppDbContext context, IUserService userService) : base(context)
+		private readonly IAppConfig _config;
+		public VideoService(AppDbContext context, IUserService userService, IAppConfig appConfig) : base(context)
 		{
 			_context = context;
 			_userService = userService;
+			_config = appConfig;
 		}
 
 		public async Task<Video> CreateVideo(ClaimsPrincipal principal)
@@ -28,7 +30,7 @@ namespace VideoStreamingService.Data.Services
 			{
 				for (int i = 0; i < 10; i++)
 				{
-					url += Statics.UrlChars[new Random().Next(0, Statics.UrlChars.Length)];
+					url += _config.UrlChars[new Random().Next(0, _config.UrlChars.Length)];
 				}
 				if (await VideoByUrlMinInfoAsync(url) == null)
 					unique = true;

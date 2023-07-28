@@ -2,6 +2,7 @@
 @using static System.IO.Path;
 @using VideoStreamingService.Data.ViewModels;
 @using VideoStreamingService.Data.Services;
+@inject IAppConfig config;
 @model FeedVM;
 @{
     ViewData["Title"] = "Библиотека";
@@ -30,7 +31,7 @@
 	var daysDescription = ["Сутки", "Неделя", "Месяц", "2 месяца", "3 месяца", "4 месяца", "5 месяцев", "Пол года"]
 	var days = [0, 1, 7, 30, 60, 90, 120, 150, 180];
 	var i = 1;
-    MaxVideoPages = @Statics.MaxVideoPages;
+    MaxVideoPages = @config.MaxVideoPages;
     FeedType = "@Model.FeedType.ToString()";
 	DaysTake = days[i+1];
 	DaysSkip = days[i];

@@ -12,10 +12,12 @@ namespace VideoStreamingService.Data.Services
         private readonly bool useProgress = false;
         private readonly bool reduceBitrate = false;
         private readonly IVideoService _videoService;
+        private readonly IAppConfig _config;
 
-		public VideoProcessingService(IVideoService videoService)
+		public VideoProcessingService(IVideoService videoService, IAppConfig appConfig)
 		{
 			_videoService = videoService;
+			_config = appConfig;
 		}
 
 		public async Task ConvertVideo(string input, CancellationToken ct)
@@ -40,12 +42,13 @@ namespace VideoStreamingService.Data.Services
 
         private async Task AddResolutions(string input, string path, IMediaInfo mediaInfo, int height, CancellationToken ct)
         {
-            await AddResolution(mediaInfo, VideoCodec.h264_nvenc, VideoSize.Fwqvga, 65536L, 20, Path.Combine(path, "240.mp4"), ct);
+	        VideoCodec codec = _config.VideoCodec;
+            await AddResolution(mediaInfo, codec, VideoSize.Fwqvga, 65536L, 20, Path.Combine(path, "240.mp4"), ct);
             File.Create(path + "\\240done").Close();
             if (height >= 480)
-                await AddResolution(mediaInfo, VideoCodec.h264_nvenc, VideoSize.Hd480, 393216L, 30, Path.Combine(path, "480.mp4"), ct);
+                await AddResolution(mediaInfo, codec, VideoSize.Hd480, 393216L, 30, Path.Combine(path, "480.mp4"), ct);
             if (height >= 720)
-                await AddResolution(mediaInfo, VideoCodec.h264_nvenc, VideoSize.Hd720, 1572864L, 60, Path.Combine(path, "720.mp4"), ct);
+                await AddResolution(mediaInfo, codec, VideoSize.Hd720, 1572864L, 60, Path.Combine(path, "720.mp4"), ct);
             File.Delete(input);
         }
 
