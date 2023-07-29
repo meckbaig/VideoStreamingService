@@ -40,11 +40,13 @@ namespace VideoStreamingService.Data.Services
             {
                 var task = new Task(() =>
                 {
-                    float dc1, dc2;
+                    float dc1, dc2, dc3 = 0;
                     FormattedVideo formattedVideo = new FormattedVideo(video, curUser);
                     dc1 = Statics.SorensenDiceCoefficient(searchText, video.Title);
-                    dc2 = Statics.SorensenDiceCoefficient(searchText, video.User.Name);
-                    formattedVideo.SorensenDiceCoefficient = dc1 > dc2 ? dc1 : dc2;
+                    dc2 = Statics.SorensenDiceCoefficient(searchText, video.User.Name)*0.9f;
+                    if (video.Description != null)
+                        dc3 = Statics.SorensenDiceCoefficient(searchText, video.Description)*0.75f;
+                    formattedVideo.SorensenDiceCoefficient = Math.Max(dc1, Math.Max(dc2, dc3));
                     if (formattedVideo.SorensenDiceCoefficient > 0)
                         formattedVideos.Add(formattedVideo);
                 });
@@ -209,7 +211,6 @@ namespace VideoStreamingService.Data.Services
                     fv.Add(new FormattedVideo(video, curUser));
                 }
             }
-
             return fv;
         }
         

@@ -165,7 +165,7 @@ namespace VideoStreamingService.Controllers
         [HttpPost]
         public async Task Reaction([FromBody] JsonDocument data)
         {
-            string url = data.RootElement.GetProperty("Id").ToString();
+            string url = data.RootElement.GetProperty("Url").ToString();
             bool reaction = data.RootElement.GetProperty("Reaction").ToString() == "1" ? true : false;
             bool doneUndone = data.RootElement.GetProperty("DoneUndone").ToString() == "True" ? true : false;
             await _videoService.EditReaction(url, User.Identity.Name, reaction, doneUndone);

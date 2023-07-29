@@ -145,7 +145,6 @@
                     }
                     else break;
                 }
-            
             }
         }
 
@@ -161,36 +160,6 @@
         function sleep(ms) {
             return new Promise(resolve => setTimeout(resolve, ms));
         }
-        //// Отложеная загрузка (пока не работает)
-        //    document.addEventListener("DOMContentLoaded", function () {
-        //        var lazyloadImages = document.querySelectorAll("img.rounded.lazy");
-        //        var lazyloadThrottleTimeout;
-
-        //        function lazyload() {
-        //            if (lazyloadThrottleTimeout) {
-        //                clearTimeout(lazyloadThrottleTimeout);
-        //            }
-
-        //            lazyloadThrottleTimeout = setTimeout(function () {
-        //                var scrollTop = window.pageYOffset;
-        //                lazyloadImages.forEach(function (img) {
-        //                    if (img.offsetTop < (window.innerHeight + scrollTop)) {
-        //                        img.src = img.dataset.src;
-        //                        img.classList.remove('lazy');
-        //                    }
-        //                });
-        //                if (lazyloadImages.length == 0) {
-        //                    document.removeEventListener("scroll", lazyload);
-        //                    window.removeEventListener("resize", lazyload);
-        //                    window.removeEventListener("orientationChange", lazyload);
-        //                }
-        //            }, 20);
-        //        }
-        //        window.onload = () => { lazyload() };
-        //        document.addEventListener("scroll", lazyload);
-        //        window.addEventListener("resize", lazyload);
-        //        window.addEventListener("orientationChange", lazyload);
-        //    });
     </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

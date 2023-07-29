@@ -11,7 +11,7 @@ public class AppConfigVM : BasicClass
     public int VideosOnPage { get; set; }
     [Display(Name = "Количество загружаемых страниц видео")]
     public int MaxVideoPages { get; set; }
-    [Display(Name = "Стандартная икнока профиля")]
+    [Display(Name = "Стандартная иконка профиля")]
     public string DefaultProfilePicture { get; set; }
     [Display(Name = "Длина автогенерируемого url")]
     public int DefaultUrlLength { get; set; }

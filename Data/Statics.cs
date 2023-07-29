@@ -143,10 +143,10 @@ namespace VideoStreamingService.Data.ViewModels
             HashSet<string> setB = new HashSet<string>();
 
             for (int i = 0; i < strA.Length - 1; ++i)
-                setA.Add(strA.Substring(i, 2).ToLower().Normalize());
+                setA.Add(strA.Substring(i, 2).ToLower());
 
             for (int i = 0; i < strB.Length - 1; ++i)
-                setB.Add(strB.Substring(i, 2).ToLower().Normalize());
+                setB.Add(strB.Substring(i, 2).ToLower());
 
             HashSet<string> intersection = new HashSet<string>(setA);
             intersection.IntersectWith(setB);
