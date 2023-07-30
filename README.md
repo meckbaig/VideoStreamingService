@@ -8,6 +8,6 @@
     
     update-database
   </li>
-  <li>In database add parameters from VideoVisibilityEnum and RoleEnum (Models folder) into VideoVisibility and Roles (make sure the id's match)</li>
+  <li>In SQL database add parameters from VideoVisibilityEnum and RoleEnum (Models folder) into VideoVisibility and Roles (make sure the id's match)</li>
   <li>Create user through the UI and change role to "Developer" in SQL</li>
 </ol>
