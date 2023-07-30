@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using VideoStreamingService.Data;
 
@@ -11,9 +12,11 @@ using VideoStreamingService.Data;
 namespace VideoStreamingService.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230730063248_initial")]
+    partial class initial
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -268,7 +271,7 @@ namespace VideoStreamingService.Migrations
                     b.HasOne("VideoStreamingService.Models.User", "User")
                         .WithMany("Comments")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("VideoStreamingService.Models.Video", "Video")
@@ -287,7 +290,7 @@ namespace VideoStreamingService.Migrations
                     b.HasOne("VideoStreamingService.Models.User", "User")
                         .WithMany("Reactions")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("VideoStreamingService.Models.Video", "Video")
@@ -306,13 +309,13 @@ namespace VideoStreamingService.Migrations
                     b.HasOne("VideoStreamingService.Models.User", "FromUser")
                         .WithMany("Subscriptions")
                         .HasForeignKey("FromUserId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("VideoStreamingService.Models.User", "ToUser")
                         .WithMany("Subscribers")
                         .HasForeignKey("ToUserId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("FromUser");
@@ -374,7 +377,7 @@ namespace VideoStreamingService.Migrations
                     b.HasOne("VideoStreamingService.Models.User", "User")
                         .WithMany("Views")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("VideoStreamingService.Models.Video", "Video")

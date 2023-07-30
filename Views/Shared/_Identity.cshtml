@@ -34,7 +34,7 @@ else
 						</button>
 					</form>
 				</li>
-				@if (curUser.Role == RoleEnum.Developer)
+				@if (curUser?.Role == RoleEnum.Developer)
 				{
 					<li>
 						<form class="dropdown-item" method="get" asp-controller="Developer" asp-action="Configuration">

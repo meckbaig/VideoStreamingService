@@ -1,5 +1,5 @@
 ﻿<!DOCTYPE html>
-<html lang="en" data-bs-theme="@Context.Request.Cookies["Theme"]">
+<html lang="en" data-bs-theme="@Context.Request?.Cookies?["Theme"]">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -37,7 +37,7 @@
                 }
                 <div class="input-group align-self-center mt-3 mt-sm-2 mb-3 mx-md-4 my-md-0 flex-nowrap">
 					<input type="text" id="searchInput" class="form-control border-secondary" placeholder="Поиск"
-                        value="@(TempData["SearchString"] != null ? TempData["SearchString"] : "")" aria-describedby="searchBuutton2">
+                        value="@(TempData?["SearchString"] != null ? TempData?["SearchString"] : "")" aria-describedby="searchBuutton2">
                     <button class="btn btn-outline-secondary" onclick="searchClick()" id="searchButton">🔎</button>
 				</div>
 				<partial name="_Identity.cshtml" />
