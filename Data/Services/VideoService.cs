@@ -50,7 +50,7 @@ namespace VideoStreamingService.Data.Services
 			{
 				while (!ct.IsCancellationRequested)
 				{
-					video.Visibility = _context.VideoVisibility.FirstOrDefault(v => v.Name == ((VideoVisibilityEnum)video.VisibilityId).ToString());
+					//video.Visibility = _context.VideoVisibility.FirstOrDefault(v => v.Name == ((VideoVisibilityEnum)video.VisibilityId).ToString());
                     Video _video = _context.Videos.FirstOrDefault(v => v.Url == video.Url);
 					if (_video == null)
 						_context.Videos.Add(video);
@@ -90,7 +90,7 @@ namespace VideoStreamingService.Data.Services
 			{
 				while (!ct.IsCancellationRequested)
                 {
-                    video.Visibility = _context.VideoVisibility.FirstOrDefault(v => v.Name == ((VideoVisibilityEnum)video.VisibilityId).ToString());
+                    //video.Visibility = _context.VideoVisibility.FirstOrDefault(v => v.Name == ((VideoVisibilityEnum)video.VisibilityId).ToString());
                     Video _video = _context.Videos.FirstOrDefault(v => v.Url == video.Url);
 					foreach (var prop in props)
 					{

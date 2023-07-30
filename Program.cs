@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using VideoStreamingService.Data;
 using VideoStreamingService.Data.Services;
 using VideoStreamingService.Data.ViewModels;
+using Xabe.FFmpeg;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +22,8 @@ builder.Services.AddScoped<IVideoService, VideoService>();
 builder.Services.AddScoped<IVideoProcessingService, VideoProcessingService>();
 builder.Services.AddScoped<IUpdateDataService, UpdateDataService>();
 builder.Services.AddTransient<IAppConfig, AppConfig>();
+
+FFmpeg.SetExecutablesPath(Path.Combine(builder.Environment.WebRootPath, "ffmpeg"), ffmpegExeutableName: "ffmpeg");
 
 var app = builder.Build();
 
