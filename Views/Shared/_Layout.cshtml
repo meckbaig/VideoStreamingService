@@ -1,73 +1,87 @@
-﻿<!DOCTYPE html>
+﻿@using Microsoft.AspNetCore.Mvc.TagHelpers
+@using VideoStreamingService.Data.ViewModels
+@inject IHttpContextAccessor Accessor
+@{
+    string page = $"{Accessor.HttpContext.Request.Scheme}://{Accessor.HttpContext.Request.Host}{Accessor.HttpContext.Request.Path}{Accessor.HttpContext.Request.QueryString}";
+    if (!page.Contains("/Video/Upload")
+        && !page.Contains("/Video/Edit")
+        && !page.Contains("/Developer/Configuration")
+        && !page.Contains("/User/Edit"))
+        Accessor.HttpContext.Session.Set<string>("LastPage", page);
+}
+<!DOCTYPE html>
 <html lang="en" data-bs-theme="@Context.Request?.Cookies?["Theme"]">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>@ViewData["Title"] - VideoStreamingService</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css"/>
 
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/VideoStreamingService.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true"/>
+    <link rel="stylesheet" href="~/VideoStreamingService.styles.css" asp-append-version="true"/>
 </head>
 <body>
-    <header id="header">
-        <nav class="navbar navbar-expand-md navbar-toggleable-md border-bottom box-shadow mb-3">
-            <div class="container-fluid d-flex">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">VideoStreamingService</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                @if (User.Identity.IsAuthenticated)
-                {
-                    <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    
-                        <ul class="navbar-nav flex-grow-1">
-                            <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Subscriptions">Подписки</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Library">Библиотека</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-controller="Home" asp-action="History">История</a>
-                            </li>
-						</ul>
+<header id="header">
+    <nav class="navbar navbar-expand-md border-bottom box-shadow mb-3 fixed-top bg-body">
+        <div class="container-fluid d-flex">
+            <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">VideoStreamingService</a>
+            <button class="navbar-toggler me-auto" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav"
+                    aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="navbar-collapse collapse" id="navbarNav">
+                <ul class="navbar-nav flex-grow-1">
+                    @if (User.Identity.IsAuthenticated)
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Subscriptions">Подписки</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Library">Библиотека</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="History">История</a>
+                        </li>
+                    }
+                </ul>
+            <div class="input-group mx-auto align-self-center mt-3 mt-sm-2 mb-3 mx-md-4 my-md-0 flex-nowrap">
+                        <input type="text" id="searchInput" class="form-control border-secondary" placeholder="Поиск"
+                               value="@(TempData?["SearchString"] != null ? TempData?["SearchString"] : "")" aria-describedby="searchBuutton2">
+                        <button class="btn btn-outline-secondary" onclick="searchClick()" id="searchButton">🔎</button>
                     </div>
-                }
-                <div class="input-group align-self-center mt-3 mt-sm-2 mb-3 mx-md-4 my-md-0 flex-nowrap">
-					<input type="text" id="searchInput" class="form-control border-secondary" placeholder="Поиск"
-                        value="@(TempData?["SearchString"] != null ? TempData?["SearchString"] : "")" aria-describedby="searchBuutton2">
-                    <button class="btn btn-outline-secondary" onclick="searchClick()" id="searchButton">🔎</button>
-				</div>
-				<partial name="_Identity.cshtml" />
-                
             </div>
-        </nav>
-    </header>
-    <div class="container-fluid position-relative">
-        <main role="main" class="pb-3">
-            @RenderBody()
-            @if (TempData["Error"] != null)
-            {
-                <div id="alert" class="alert alert-danger position-absolute end-0 top-0 me-3 p-3" role="alert">
-                    <b>Внимание!</b> - @TempData["Error"]
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-			    </div>
-            }
-        </main>
-    </div>
+                    <partial name="_Identity.cshtml"/>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2023 - VideoStreamingService - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
         </div>
-    </footer>
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
-    <script src="~/js/filedrop.js"></script>
-    <script type="text/javascript">
+    </nav>
+</header>
+<div class="container-fluid position-relative">
+    <main id="main" role="main" class="pb-3 pt-5 mt-2">
+        @RenderBody()
+        @if (TempData["Error"] != null)
+        {
+            @await Html.PartialAsync("_Alert", TempData["Error"])
+        }
+    </main>
+</div>
+
+<footer class="border-top footer text-muted">
+    <div class="container">
+        &copy; 2023 - VideoStreamingService - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+    </div>
+</footer>
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script src="~/js/site.js" asp-append-version="true"></script>
+<script src="~/js/filedrop.js"></script>
+<script type="text/javascript">
+        // Сообщение об ошибке
+        function showError(message){
+            $.get("/Home/GetAlert/" + message, function (res) {
+                $('#main').append(res)
+            });
+        }
+    
         // Поиск
         $(document).ready(function () {
             $("#searchInput").keypress(function (event) {
@@ -161,6 +175,6 @@
             return new Promise(resolve => setTimeout(resolve, ms));
         }
     </script>
-    @await RenderSectionAsync("Scripts", required: false)
+@await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

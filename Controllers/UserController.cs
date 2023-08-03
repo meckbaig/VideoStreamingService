@@ -15,10 +15,12 @@ namespace VideoStreamingService.Controllers
     public class UserController : Controller
     {
         private readonly IUserService _userService;
+        private readonly ISession _session;
 
-        public UserController(IUserService userService)
+        public UserController(IUserService userService, IHttpContextAccessor accessor)
         {
             _userService = userService;
+            _session = accessor.HttpContext.Session;
         }
 
         [HttpPost]
@@ -38,13 +40,8 @@ namespace VideoStreamingService.Controllers
 
         public async Task<IActionResult> Logout()
         {
-            string lp = Request.Headers["Referer"].ToString();
-
-            Response.Cookies.Append("LastPage", Request.Headers["Referer"].ToString());
 			await HttpContext.SignOutAsync();
-            if (string.IsNullOrEmpty(Request.Cookies["LastPage"]))
-                return Redirect("/");
-            return Redirect(lp);
+            return _session.Get("LastPage", out string page) ? Redirect(page) : Redirect("/");
         }
 
         public IActionResult Login()
@@ -111,10 +108,7 @@ namespace VideoStreamingService.Controllers
             };
             ClaimsIdentity claimsIdentity = new ClaimsIdentity(claims, "Cookies");
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity));
-
-            if (string.IsNullOrEmpty(Request.Cookies["LastPage"]))
-                return Redirect("/");
-            return Redirect(Request.Cookies["LastPage"]);
+            return _session.Get("LastPage", out string page) ? Redirect(page) : Redirect("/");
         }
 
         [HttpGet]
@@ -138,12 +132,7 @@ namespace VideoStreamingService.Controllers
             };
             ClaimsIdentity claimsIdentity = new ClaimsIdentity(claims, "Cookies");
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity));
-
-
-
-            if (string.IsNullOrEmpty(Request.Cookies["LastPage"]))
-                return Redirect("/");
-            return Redirect(Request.Cookies["LastPage"]);
+            return _session.Get("LastPage", out string page) ? Redirect(page) : Redirect("/");
         }
 
         public async Task<IActionResult> CheckUrl(string url)

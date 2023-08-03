@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Newtonsoft.Json.Linq;
 using System.Text.Json;
+using Microsoft.Data.SqlClient;
 using VideoStreamingService.Data.Services;
 using VideoStreamingService.Data.ViewModels;
 using VideoStreamingService.Models;
@@ -14,14 +15,17 @@ namespace VideoStreamingService.Controllers
         private readonly IUserService _userService;
         private readonly IVideoService _videoService;
         private readonly IVideoProcessingService _videoProcessingService;
+        private readonly ISession _session;
         //ffmpeg.xabe.net/docs.html
 
-        public VideoController(IWebHostEnvironment appEnvironment, IUserService userService, IVideoService videoService, IVideoProcessingService videoProcessingService)
+        public VideoController(IWebHostEnvironment appEnvironment, IUserService userService, 
+            IVideoService videoService, IVideoProcessingService videoProcessingService, IHttpContextAccessor accessor)
         {
             _appEnvironment = appEnvironment;
             _userService = userService;
             _videoService = videoService;
             _videoProcessingService = videoProcessingService;
+            _session = accessor.HttpContext.Session;
         }
 
         [RequestFormLimits(MultipartBodyLengthLimit = 2200000000)]
@@ -30,14 +34,15 @@ namespace VideoStreamingService.Controllers
             return PartialView("_VideoDescription");
         }
 
-        [HttpPost]
+        [HttpPut]
         [RequestFormLimits(MultipartBodyLengthLimit = 2200000000)]
         public async Task<IActionResult> VideoDescriptionParial([FromBody] JsonDocument data)
         {
             Video video = data.Deserialize<Video>();
-            await _videoService.SaveVideoAsync(video,
-                new CancellationTokenSource(TimeSpan.FromSeconds(10)).Token);
-            return PartialView("_VideoDescription", video);
+            if (await _videoService.SaveVideoAsync(video,
+                new CancellationTokenSource(TimeSpan.FromSeconds(10)).Token))
+                return PartialView("_VideoDescription", video);
+            return Problem(title:"Ошибка на сервере при создании видео");
         }
 
         [HttpPost]
@@ -47,19 +52,10 @@ namespace VideoStreamingService.Controllers
             return PartialView(video);
         }
 
-        public async Task<IActionResult> Upload()
-        {
-            string lp = Request.Headers["Referer"].ToString();
-            if (!lp.Contains("/Video/Upload") && !lp.Contains("/Video/SaveVideo"))
-                Response.Cookies.Append("LastPage", lp);
-            return View(await _videoService.CreateVideo(User));
-        }
-
+        public async Task<IActionResult> Upload() => View(await _videoService.CreateVideo(User));
+    
         public async Task<IActionResult> Edit()
         {
-            string lp = Request.Headers["Referer"].ToString();
-            if (!lp.Contains("/Video/Upload") && !lp.Contains("/Video/SaveVideo"))
-                Response.Cookies.Append("LastPage", lp);
             string url = "";
             if (!String.IsNullOrEmpty(HttpContext.Request.Query[nameof(url)]))
                 url = HttpContext.Request.Query[nameof(url)];
@@ -69,18 +65,22 @@ namespace VideoStreamingService.Controllers
             else
 			{
 				TempData["Error"] = "Вы не обладаете правами для этого действия!"; 
-                if (string.IsNullOrEmpty(Request.Cookies["LastPage"]))
-                    return Redirect("/");
-                return Redirect(Request.Cookies["LastPage"]);
+                return _session.Get("LastPage", out string page) ? Redirect(page) : Redirect("/");
             }
 		}
 
         public async Task<IActionResult> watch()
         {
+            Response.Cookies.Append("LastPage", Request.Headers["Referer"].ToString());
             string url = "";
             if (!String.IsNullOrEmpty(HttpContext.Request.Query[nameof(url)]))
                 url = HttpContext.Request.Query[nameof(url)];
             Video video = await _videoService.VideoByUrlFullInfoAsync(url);
+            if (video == null)
+            {
+                TempData["Error"] = "Видео по указанному URL не найдено!";
+                return _session.Get("LastPage", out string page) ? Redirect(page) : Redirect("/");
+            }
 
             List<int> resolutions = new List<int>() { 240 };
             if (video.Resolution >= 480)
@@ -101,10 +101,7 @@ namespace VideoStreamingService.Controllers
             else
             {
                 TempData["Error"] = "Доступ к видео ограничен!";
-                if (string.IsNullOrEmpty(Request.Cookies["LastPage"]))
-                    return Redirect("/");
-                return Redirect(Request.Cookies["LastPage"]);
-
+                return _session.Get("LastPage", out string page) ? Redirect(page) : Redirect("/");
             }
         }
 
@@ -118,8 +115,8 @@ namespace VideoStreamingService.Controllers
             }
 			return new EmptyResult();
 		}
-
-		[HttpPost]
+        
+        [HttpPost]
 		public async Task<IActionResult> SendComment([FromBody] JsonDocument data)
 		{
 			string url = data.RootElement.GetProperty("url").ToString();
@@ -137,16 +134,7 @@ namespace VideoStreamingService.Controllers
             return Ok();
 		}
 
-
-		//[HttpPost]
-		//public IActionResult SetTempData([FromBody] JsonDocument data)
-		//{
-		//	string wv = data.RootElement.GetProperty("wideVideo").ToString();
-		//	TempData["WideVideo"] = wv == "True" ? "False" : "True";
-		//	return new EmptyResult();
-		//}
-
-		[HttpPost]
+		[HttpPut]
 		[RequestFormLimits(MultipartBodyLengthLimit = 2200000000)]
         public async Task<IActionResult> ShowVideoInEditor([FromBody] JsonDocument data)
         {
@@ -158,7 +146,6 @@ namespace VideoStreamingService.Controllers
                 await Task.Delay(1000);
             }
             System.IO.File.Delete(tmpPath);
-
             return Ok();
         }
 
@@ -190,6 +177,7 @@ namespace VideoStreamingService.Controllers
             await _videoProcessingService.ConvertVideo(path, Statics.AddToken(url, Statics.TokenType.Upload).Token);
         }
 
+        [HttpPost]
         public async Task<IActionResult> SaveVideo(Video video)
         {
             video.Visibility = (VideoVisibilityEnum)video.VisibilityId;
@@ -197,19 +185,15 @@ namespace VideoStreamingService.Controllers
             cts.CancelAfter(TimeSpan.FromSeconds(10));
             video = await _videoProcessingService.AddVideoInfo(video, _appEnvironment.WebRootPath);
             await _videoService.SaveVideoAsync(video, cts.Token);
-            if (string.IsNullOrEmpty(Request.Cookies["LastPage"]))
-                return Redirect("/");
-            return Redirect(Request.Cookies["LastPage"]);
+            return _session.Get("LastPage", out string page) ? Redirect(page) : Redirect("/");
         }
-
+        
         public async Task<IActionResult> DeleteVideo(Video video)
         {
             if (!await _videoService.DeleteVideo(video))
                 return View("Edit");
             _videoService.DeleteDirectory(Path.Combine(_appEnvironment.WebRootPath, "Videos", video.Url));
-            if (string.IsNullOrEmpty(Request.Cookies["LastPage"]))
-                return Redirect("/");
-            return Redirect(Request.Cookies["LastPage"]);
+            return _session.Get("LastPage", out string page) ? Redirect(page) : Redirect("/");
         }
     }
 }

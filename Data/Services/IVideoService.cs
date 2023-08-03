@@ -10,7 +10,7 @@ namespace VideoStreamingService.Data.Services
     public interface IVideoService : IEntityBaseRepository<Video>
     {
         Task <Video> CreateVideo(ClaimsPrincipal principal);
-        Task SaveVideoAsync(Video video, CancellationToken ct);
+        Task<bool> SaveVideoAsync(Video video, CancellationToken ct);
         Task SaveVideoAsync(Video video, CancellationToken ct, string[] props);
         Task<bool> DeleteVideo(Video video);
         Task DeleteDirectory(string path);

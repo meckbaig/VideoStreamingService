@@ -23,6 +23,10 @@
                         <label asp-for="UrlChars" class="form-label"></label>
                     </div>
                     <div class="form-floating mb-3">
+                        <input asp-for="DefaultUrlLength" type="number" class="form-control"/>
+                        <label asp-for="DefaultUrlLength" class="form-label"></label>
+                    </div>
+                    <div class="form-floating mb-3">
                         <input asp-for="VideosOnPage" type="number" class="form-control"/>
                         <label asp-for="VideosOnPage" class="form-label"></label>
                     </div>
@@ -31,8 +35,8 @@
                         <label asp-for="MaxVideoPages" class="form-label"></label>
                     </div>
                     <div class="form-floating mb-3">
-                        <input asp-for="DefaultUrlLength" type="number" class="form-control"/>
-                        <label asp-for="DefaultUrlLength" class="form-label"></label>
+                        <input asp-for="PagesInChunk" type="number" class="form-control"/>
+                        <label asp-for="PagesInChunk" class="form-label"></label>
                     </div>
                     <div class="input-group">
                         <label asp-for="VideoCodec" class="input-group-text"></label>
@@ -43,6 +47,10 @@
                                         selected="@(codec==Model.VideoCodec)">@codec.ToString()</option>
                             }
                         </select>
+                    </div>
+                    <div class="mb-3 my-2">
+                        <input asp-for="UseGpu" class="form-check-input me-2"/>
+                        <label asp-for="UseGpu" class="form-check-label"></label>
                     </div>
                 </div>
             </div>

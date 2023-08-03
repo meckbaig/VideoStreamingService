@@ -15,6 +15,10 @@ public class AppConfigVM : BasicClass
     public string DefaultProfilePicture { get; set; }
     [Display(Name = "Длина автогенерируемого url")]
     public int DefaultUrlLength { get; set; }
+    [Display(Name = "Страниц в запросе")]
+    public int PagesInChunk { get; set; }
+    [Display(Name = "Использовать GPU")]
+    public bool UseGpu { get; set; }
     [Display(Name = "Кодек видео")]
     public VideoCodec VideoCodec { get; set; }
 }

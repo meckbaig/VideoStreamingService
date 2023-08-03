@@ -113,10 +113,8 @@ namespace VideoStreamingService.Controllers
                         {
                             visibilitiesArr[i] = (VideoVisibilityEnum)Enum.Parse(typeof(VideoVisibilityEnum), visibilitiesStringsArr[i]);
                         }
-                        User curUser = await _userService.GetUserByUrlAsync(User.Identity.Name);
-                        videos = _updateDataService.GetVideosAsync(_config.VideosOnPage, nextPage,
-                            false, visibilitiesArr.Length == 0 ? null : visibilitiesArr, channelUrl)
-                            .Result.ToFormattedVideos(curUser);
+                        videos = await _updateDataService.GetChannelVideos(_config.VideosOnPage, nextPage,
+                            visibilitiesArr.Length == 0 ? null : visibilitiesArr, User.Identity.Name, channelUrl);
                         break;
                     default:
                         videos = new List<FormattedVideo>();
@@ -126,6 +124,7 @@ namespace VideoStreamingService.Controllers
             catch (Exception ex)
             {
                 Console.WriteLine(ex);
+                TempData["Error"] = "Произошла ошибка при получении данных с сервера.";
                 throw;
             }
 
@@ -177,6 +176,12 @@ namespace VideoStreamingService.Controllers
                 Videos = videos,
             };
             return PartialView("_Videos", feedVM);
+        }
+        
+        [Route("{controller}/{action}/{message}")]
+        public IActionResult GetAlert(string message)
+        {
+            return PartialView("_Alert", message);
         }
 
         //[ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

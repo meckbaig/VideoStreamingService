@@ -10,64 +10,72 @@
 }
 else
 {
-	User curUser = await UserService.GetUserByUrlAsync(User.Identity.Name);
+    User curUser = await UserService.GetUserByUrlAsync(User.Identity.Name);
 	@*User profile section*@
-	<div class="d-flex align-items-end flex-row flex-nowrap gap-2 mw-100">
-		<div class="mw-100">
-			<a class="btn btn-outline-primary text-nowrap crop-text-1" asp-controller="Video" asp-action="Upload">+ Добавить видео</a>
-		</div>
-		<div class="dropdown">
-			<button id="userButton" class="btn btn-outline-success dropdown-toggle crop-text-1 mw-100" type="button" data-bs-toggle="dropdown"
-				aria-expanded="false" aria-haspopup="true">@Context.Request.Cookies["UserName"]</button>
-			<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profile-dropdown">
-				<li>
-					<form class="dropdown-item" action="/@User.Identity.Name" method="get">
-						<button class="dropdown-item text-center">
-							Мой канал
-						</button>
-					</form>
-				</li>
-				<li>
-					<form class="dropdown-item" asp-controller="User" asp-action="Edit" method="get">
-						<button class="dropdown-item text-center">
-							Настройки
-						</button>
-					</form>
-				</li>
-				@if (curUser?.Role == RoleEnum.Developer)
-				{
-					<li>
-						<form class="dropdown-item" method="get" asp-controller="Developer" asp-action="Configuration">
-							<button class="dropdown-item text-center">
-								Настройки<wbr>
-								сервиса
-							</button>
-						</form>
-					</li>
-				}
-				<li>
-					<form class="dropdown-item" asp-controller="User" asp-action="Logout">
-						<button class="dropdown-item text-center">
-							Выйти
-						</button>
-					</form>
-				</li>
-				<li>
-					<a class="dropdown-item text-center" style="cursor: pointer">Тема</a>
-					<ul class="dropdown-menu dropdown-submenu dropdown-submenu-right">
-						<li>
-							<a class="dropdown-item text-center" style="cursor: pointer" onclick="changeTheme(event)" id="light">Светлая</a>
-						</li>
-						<li>
-							<a class="dropdown-item text-center" style="cursor: pointer" onclick="changeTheme(event)" id="dark">Тёмная</a>
-						</li>
-					</ul>
-				</li>
-			</ul>
-		</div>
+    <div class="d-flex align-items-end flex-row flex-nowrap gap-2 mw-100">
+        <div class="d-none d-lg-flex">
+            <a class="btn btn-outline-primary text-nowrap crop-text-1" asp-controller="Video" asp-action="Upload">+ Добавить видео</a>
+        </div>
+        <div class="dropdown">
+            <button id="userButton" class="btn btn-outline-success dropdown-toggle crop-text-1" type="button" data-bs-toggle="dropdown"
+                    aria-expanded="false" aria-haspopup="true" style="max-width: 160px">
+                @Context.Request.Cookies["UserName"]
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profile-dropdown">
+                <li class="d-flex d-lg-none">
+                    <div class="m-2 mt-0">
+                        <a class="btn btn-outline-primary text-nowrap crop-text-1" asp-controller="Video" asp-action="Upload">+ Добавить видео</a>
+                    </div>
+                </li>
+                <hr class="m-0 p-0 d-flex d-lg-none">
+                <li>
+                    <form class="dropdown-item" action="/@User.Identity.Name" method="get">
+                        <button class="dropdown-item text-center">
+                            Мой канал
+                        </button>
+                    </form>
+                </li>
+                <li>
+                    <form class="dropdown-item" asp-controller="User" asp-action="Edit" method="get">
+                        <button class="dropdown-item text-center">
+                            Настройки
+                        </button>
+                    </form>
+                </li>
+                @if (curUser?.Role == RoleEnum.Developer)
+                {
+                    <li>
+                        <form class="dropdown-item" method="get" asp-controller="Developer" asp-action="Configuration">
+                            <button class="dropdown-item text-center">
+                                Настройки<wbr>
+                                сервиса
+                            </button>
+                        </form>
+                    </li>
+                }
+                <li>
+                    <form class="dropdown-item" asp-controller="User" asp-action="Logout">
+                        <button class="dropdown-item text-center">
+                            Выйти
+                        </button>
+                    </form>
+                </li>
+                <li>
+                    <a class="dropdown-item text-center" style="cursor: pointer">Тема</a>
+                    <ul class="dropdown-menu dropdown-submenu dropdown-submenu-right">
+                        <li>
+                            <a class="dropdown-item text-center" style="cursor: pointer" onclick="changeTheme(event)" id="light">Светлая</a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item text-center" style="cursor: pointer" onclick="changeTheme(event)" id="dark">Тёмная</a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
     </div>
-	<script type="text/javascript">
-		document.documentElement.setAttribute("data-bs-theme", "@(await UserService.GetTheme(User.Identity.Name))");
+    <script type="text/javascript">
+		
 
 		
 		function changeTheme(event) {

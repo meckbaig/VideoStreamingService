@@ -39,10 +39,7 @@ namespace VideoStreamingService.Data.ViewModels
                 Ignored = true;
 
 			if (videos != null)
-				foreach (var v in videos)
-				{
-					FeedVM.Videos.Add(new FormattedVideo(v, curUser));
-				}
+				FeedVM.Videos = videos.ToFormattedVideos(curUser);
 		}
 
 		public UserChannel()

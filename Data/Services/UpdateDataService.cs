@@ -1,4 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Primitives;
 using VideoStreamingService.Data.ViewModels;
 using VideoStreamingService.Models;
 
@@ -9,23 +11,37 @@ namespace VideoStreamingService.Data.Services
         private readonly AppDbContext _context;
         private readonly IUserService _userService;
         private readonly IVideoService _videoService;
+        private readonly IMemoryCache _cache;
+        private readonly IAppConfig _config;
 
-        public UpdateDataService(AppDbContext context, IUserService userService, IVideoService videoService)
+        public UpdateDataService(AppDbContext context, IUserService userService, IVideoService videoService,
+            IMemoryCache memoryCache, IAppConfig appConfig)
         {
             _context = context;
             _userService = userService;
             _videoService = videoService;
+            _cache = memoryCache;
+            _config = appConfig;
         }
-
 
         public async Task<SearchVM> GetSearchResults(int amount, int page, string searchString, string curUserUrl)
         {
             SearchVM searchVM = new SearchVM() { SearchString = searchString };
-            searchVM.SearchElements.AddRange(await SearchVideosAsync(searchString, curUserUrl));
-            searchVM.SearchElements.AddRange(await SearchUsersAsync(searchString, curUserUrl));
-            searchVM.SearchElements = searchVM.SearchElements.OrderByDescending(se => se.SorensenDiceCoefficient)
-                .ThenByDescending(se => se.MaxResults).ThenByDescending(se => se.Url)
-                .Skip((page - 1) * amount).Take(amount).ToList();
+            Task<object> task = new Task<object>(() =>
+            {
+                ListDataCache listData = new ListDataCache()
+                    { PagesFrom = page, PagesTo = page + _config.PagesInChunk - 1 };
+                List<ISearchElement> searchElements = new List<ISearchElement>();
+                searchElements.AddRange(SearchVideosAsync(searchString, curUserUrl).Result);
+                searchElements.AddRange(SearchUsersAsync(searchString, curUserUrl).Result);
+                searchElements = searchElements.OrderByDescending(se => se.SorensenDiceCoefficient)
+                    .ThenByDescending(se => se.MaxResults).ThenByDescending(se => se.Url)
+                    .Skip((page - 1) * amount * _config.PagesInChunk).Take(amount * _config.PagesInChunk).ToList();
+                listData.Objects.AddRange(searchElements);
+                return listData;
+            });
+            searchVM.SearchElements = GetListFromCache(amount, page, nameof(GetSearchResults), task, curUserUrl)
+                .Result.OfType<ISearchElement>().ToList();
             return searchVM;
         }
 
@@ -43,9 +59,9 @@ namespace VideoStreamingService.Data.Services
                     float dc1, dc2, dc3 = 0;
                     FormattedVideo formattedVideo = new FormattedVideo(video, curUser);
                     dc1 = Statics.SorensenDiceCoefficient(searchText, video.Title);
-                    dc2 = Statics.SorensenDiceCoefficient(searchText, video.User.Name)*0.9f;
+                    dc2 = Statics.SorensenDiceCoefficient(searchText, video.User.Name) * 0.9f;
                     if (video.Description != null)
-                        dc3 = Statics.SorensenDiceCoefficient(searchText, video.Description)*0.75f;
+                        dc3 = Statics.SorensenDiceCoefficient(searchText, video.Description) * 0.75f;
                     formattedVideo.SorensenDiceCoefficient = Math.Max(dc1, Math.Max(dc2, dc3));
                     if (formattedVideo.SorensenDiceCoefficient > 0)
                         formattedVideos.Add(formattedVideo);
@@ -85,58 +101,138 @@ namespace VideoStreamingService.Data.Services
 
         public async Task<List<FormattedVideo>> GetVideosHistory(int amount, int page, string curUserUrl)
         {
-            User curUser = await _userService.GetUserByUrlAsync(curUserUrl);
-
-            List<Video> vlist = await _context.Videos
-                .Include(u => u.User)
-                .Include(u => u.Views)
-                .Include(u => u.Visibility)
-                .Where(v => v.Views.FirstOrDefault(v => v.UserId == curUser.Id) != null
-                            && (v.Visibility.Name != VideoVisibilityEnum.Hidden.ToString() || v.UserId == curUser.Id))
-                .Skip((page - 1) * amount).Take(amount) // pagination
-                .OrderByDescending(v => v.Views.FirstOrDefault(v => v.UserId == curUser.Id).Date)
-                .ToListAsync();
-
-            List<FormattedVideo> fv = new List<FormattedVideo>();
-            foreach (var video in vlist)
+            Task<object> task = new Task<object>(() =>
             {
-                fv.Add(new FormattedVideo(video, curUser));
-            }
+                ListDataCache fvc = new ListDataCache()
+                    { PagesFrom = page, PagesTo = page + _config.PagesInChunk - 1 };
+                User curUser = _userService.GetUserByUrlAsync(curUserUrl).Result;
 
+                List<Video> vlist = _context.Videos
+                    .Include(u => u.User)
+                    .Include(u => u.Views)
+                    .Include(u => u.Visibility)
+                    .Where(v => v.Views.FirstOrDefault(v => v.UserId == curUser.Id) != null
+                                && (v.Visibility.Name != VideoVisibilityEnum.Hidden.ToString() ||
+                                    v.UserId == curUser.Id))
+                    .OrderByDescending(v => v.Views.FirstOrDefault(v => v.UserId == curUser.Id).Date)
+                    .Skip((page - 1) * amount).Take(amount * _config.PagesInChunk) // pagination
+                    .ToListAsync().Result;
+
+                fvc.Objects.AddRange(vlist.ToFormattedVideos(curUser));
+                return fvc;
+            });
+            
+            List<FormattedVideo> fv = GetListFromCache(amount, page, nameof(GetVideosHistory), task, curUserUrl)
+                .Result.OfType<FormattedVideo>().ToList();
             return fv;
         }
 
         public async Task<List<FormattedVideo>> GetLastVideos(int daysTake, int daysSkip, int amount, int page,
             string curUserUrl)
         {
-            DateTime take = DateTime.Now.AddDays(-daysTake);
-            DateTime skip = DateTime.Now.AddDays(-daysSkip);
-            User curUser = _context.Users.Include(u => u.Subscriptions)
-                .FirstOrDefault(u => u.Url == curUserUrl);
-            List<Subscription> subsList = curUser.Subscriptions.ToList();
-
-            List<Video> videosList = new List<Video>();
-            foreach (Subscription sub in subsList)
+            Task<object> task = new Task<object>(() =>
             {
-                User user = _context.Users
-                    .Include(u => u.Subscribers.Where(s => s.Sub_Ignore == true))
-                    .Include(u => u.Videos).ThenInclude(v => v.Views)
-                    .Include(u => u.Videos).ThenInclude(v => v.Visibility)
-                    .FirstOrDefault(u => u.Id == sub.ToUserId);
+                ListDataCache listData = new ListDataCache()
+                    { PagesFrom = page, PagesTo = page + _config.PagesInChunk - 1 };
+                DateTime take = DateTime.Now.AddDays(-daysTake);
+                DateTime skip = DateTime.Now.AddDays(-daysSkip);
+                User curUser = _context.Users.Include(u => u.Subscriptions)
+                    .FirstOrDefault(u => u.Url == curUserUrl);
+                List<Subscription> subsList = curUser.Subscriptions.ToList();
 
-                videosList.AddRange(user.Videos.Where(v =>
-                    v.Uploaded <= skip && v.Uploaded > take
-                                       && v.Visibility.Name == VideoVisibilityEnum.Visible.ToString()));
-            }
+                List<Video> videosList = new List<Video>();
+                foreach (Subscription sub in subsList)
+                {
+                    User user = _context.Users
+                        .Include(u => u.Subscribers.Where(s => s.Sub_Ignore == true))
+                        .Include(u => u.Videos).ThenInclude(v => v.Views)
+                        .Include(u => u.Videos).ThenInclude(v => v.Visibility)
+                        .FirstOrDefault(u => u.Id == sub.ToUserId);
 
-            videosList = videosList.OrderByDescending(v => v.Uploaded).Skip((page - 1) * amount).Take(amount).ToList();
+                    videosList.AddRange(user.Videos.Where(v =>
+                        v.Uploaded <= skip && v.Uploaded > take
+                                           && v.Visibility.Name == VideoVisibilityEnum.Visible.ToString()));
+                }
+                videosList = videosList.OrderByDescending(v => v.Uploaded)
+                    .Skip((page - 1) * amount * _config.PagesInChunk)
+                    .Take(amount * _config.PagesInChunk).ToList();
 
+                listData.Objects.AddRange(videosList.ToFormattedVideos(curUser));
+                return listData;
+            });
+            
+            List<FormattedVideo> fv = GetListFromCache(amount, page, nameof(GetLastVideos), task, curUserUrl)
+                .Result.OfType<FormattedVideo>().ToList();
+            return fv;
+        }
+
+        public async Task<List<FormattedVideo>> GetRandomVideos(
+            int amount, int page, string curUserUrl, List<string>? urlsList)
+        {
             List<FormattedVideo> fv = new List<FormattedVideo>();
-            foreach (var video in videosList)
-            {
-                fv.Add(new FormattedVideo(video, curUser));
-            }
 
+            Task<object> task = new Task<object>(() =>
+            {
+                ListDataCache listData = new ListDataCache()
+                    { PagesFrom = page, PagesTo = page + _config.PagesInChunk - 1 };
+                List<Video> videos = GetVideosAsync(amount * _config.PagesInChunk, page,
+                    true, new[] { VideoVisibilityEnum.Visible }, urlsList: urlsList).Result;
+                User curUser = _userService.GetUserByUrlAsync(curUserUrl).Result;
+
+                foreach (Video video in videos)
+                {
+                    if (video.Length > 0 && video.Resolution > 0)
+                    {
+                        listData.Objects.Add(new FormattedVideo(video, curUser));
+                    }
+                }
+                return listData;
+            });
+
+            fv = GetListFromCache(amount, page, nameof(GetRandomVideos), task, curUserUrl)
+                .Result.OfType<FormattedVideo>().ToList();
+            return fv;
+        }
+
+        public async Task<List<FormattedVideo>> GetChannelVideos(int amount, int page,
+            VideoVisibilityEnum[] visibilitiesArr, string curUserUrl, string channelUrl)
+        {
+            Task<object> task = new Task<object>(() =>
+            {
+                User curUser = _userService.GetUserByUrlAsync(curUserUrl).Result;
+                ListDataCache listData = new ListDataCache()
+                    { PagesFrom = page, PagesTo = page + _config.PagesInChunk - 1 };
+                var videos = GetVideosAsync(amount * _config.PagesInChunk,
+                    (page - page % _config.PagesInChunk), false,
+                    visibilitiesArr, channelUrl).Result;
+                listData.Objects.AddRange(videos.ToFormattedVideos(curUser));
+                return listData;
+            });
+            List<FormattedVideo> formattedVideos = GetListFromCache(amount, page, 
+                    nameof(GetChannelVideos), task, curUserUrl)
+                .Result.OfType<FormattedVideo>().ToList();;
+            return formattedVideos;
+        }
+        
+        private async Task<List<object>> GetListFromCache(int amount, int page, string key,
+            Task<object> getVideosTask, string userUrl)
+        {
+            ListDataCache listData;
+            if (!_cache.TryGetValue(key+userUrl, out listData))
+            {
+                getVideosTask.Start();
+                listData = (ListDataCache?)getVideosTask.Result;
+                _cache.Set(key+userUrl, listData, 
+                    new MemoryCacheEntryOptions().SetSlidingExpiration(TimeSpan.FromMinutes(5)));
+            }
+            else if (listData?.PagesTo < page || listData?.PagesFrom > page || page == 1)
+            {
+                getVideosTask.Start();
+                listData = (ListDataCache?)getVideosTask.Result;
+                _cache.Set(key+userUrl, listData,
+                    new MemoryCacheEntryOptions().SetSlidingExpiration(TimeSpan.FromMinutes(5)));
+            }
+            List<object> fv = listData.Objects.Skip(amount * (page - 1) % (_config.PagesInChunk * amount)).Take(amount).ToList();
             return fv;
         }
 
@@ -164,6 +260,7 @@ namespace VideoStreamingService.Data.Services
                     }
                     list = newList;
                 }
+
                 if (shuffle != null)
                 {
                     if ((bool)shuffle)
@@ -181,13 +278,15 @@ namespace VideoStreamingService.Data.Services
                         {
                             list.Remove(list.FirstOrDefault(l => l.Url == url));
                         }
+
                         list = list.Take((int)amount).ToList();
                     }
                     else
                     {
-                        list = list.Skip((int)amount*((int)page-1)).Take((int)amount).ToList();
+                        list = list.Skip((int)amount * ((int)page - 1)).Take((int)amount).ToList();
                     }
                 }
+                
                 return list;
             }
             catch (Exception)
@@ -195,24 +294,5 @@ namespace VideoStreamingService.Data.Services
                 return new List<Video>();
             }
         }
-
-        public async Task<List<FormattedVideo>> GetRandomVideos(
-            int amount, int page, string curUserUrl, List<string>? urlsList)
-        {
-            List<Video> videos = await GetVideosAsync(amount, page,
-                true, new[] { VideoVisibilityEnum.Visible }, urlsList: urlsList);
-            User curUser = await _userService.GetUserByUrlAsync(curUserUrl);
-
-            List<FormattedVideo> fv = new List<FormattedVideo>();
-            foreach (Video video in videos)
-            {
-                if (video.Length > 0 && video.Resolution > 0)
-                {
-                    fv.Add(new FormattedVideo(video, curUser));
-                }
-            }
-            return fv;
-        }
-        
     }
 }

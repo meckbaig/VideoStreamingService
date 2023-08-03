@@ -12,11 +12,13 @@ public class DeveloperController : Controller
 {
     private readonly IAppConfig _config;
     private readonly IUserService _userService;
+    private readonly ISession _session;
 
-    public DeveloperController(IAppConfig appConfig, IUserService userService)
+    public DeveloperController(IAppConfig appConfig, IUserService userService, IHttpContextAccessor accessor)
     {
         _config = appConfig;
         _userService = userService;
+        _session = accessor.HttpContext.Session;
     }
 
     public async Task<IActionResult> Configuration()
@@ -39,15 +41,18 @@ public class DeveloperController : Controller
             return Redirect(Request.Cookies["LastPage"]); 
         }
 
-        AppConfigVM appConfigVM = new AppConfigVM()
+        AppConfigVM appConfigVM = new AppConfigVM();
+        foreach (var prop in appConfigVM.GetType().GetProperties())
         {
-            UrlChars = _config.UrlChars,
-            VideosOnPage = _config.VideosOnPage,
-            MaxVideoPages = _config.MaxVideoPages,
-            DefaultProfilePicture = _config.DefaultProfilePicture,
-            DefaultUrlLength = _config.DefaultUrlLength,
-            VideoCodec = _config.VideoCodec
-        };
+            try
+            {
+                if (prop.Name != "Item")
+                    appConfigVM[prop.Name] = _config[prop.Name];
+            }
+            catch (TargetParameterCountException)
+            {
+            }
+        }
         return View(appConfigVM);
     }
 
@@ -70,11 +75,7 @@ public class DeveloperController : Controller
             {
             }
         }
-
         _config.UpdateAppSettings(keys, values);
-
-        if (string.IsNullOrEmpty(Request.Cookies["LastPage"]))
-            return Redirect("/");
-        return Redirect(Request.Cookies["LastPage"]);
+        return _session.Get("LastPage", out string page) ? Redirect(page) : Redirect("/");
     }
 }

@@ -60,8 +60,7 @@
             return null;
         };
         $('#staticUpload').modal('hide');
-        refreshPartial();
-        uploadVideo();        
+        refreshPartial();      
     });
 
     function refreshPartial(){
@@ -74,22 +73,30 @@
 
         $.ajax({
             url: "/Video/VideoDescriptionParial",
-            type: "POST",
+            type: "PUT",
             data: JSON.stringify(video),
             cache: false,
             contentType: "application/json",
             processData: false,
-        }).done(function (res) {
-            $("#videoDescription").html(res);
-            refreshTextareaInput();
-            showVideo();
+            statusCode: {
+                500: function(xhr) {
+                    showError(xhr.responseJSON.title);
+                }
+            },
+            success: function (res) {
+                $("#videoDescription").html(res);
+                refreshTextareaInput();
+                showVideo();
+                uploadVideo();  
+            }
+
         });
     }
 
     function showVideo(){
         $.ajax({
             url: "/Video/ShowVideoInEditor",
-            type: "POST",
+            type: "PUT",
             data: JSON.stringify({ Url: "@Model.Url" }),
             cache: false,
             contentType: "application/json",

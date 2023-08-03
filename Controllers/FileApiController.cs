@@ -79,7 +79,8 @@ namespace VideoStreamingService.Controllers
             string image = await _userService.ChangeProfilePicture(file);
             return Ok(image);
         }
-
+        
+        
         [Route("GetVideo")]
         public async Task<FileResult> GetVideo()
         {

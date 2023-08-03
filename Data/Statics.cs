@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Reflection;
+using System.Text.Json;
 using VideoStreamingService.Models;
 
 namespace VideoStreamingService.Data.ViewModels
@@ -154,7 +155,7 @@ namespace VideoStreamingService.Data.ViewModels
             return (float)(2.0 * intersection.Count) / (setA.Count + setB.Count);
         }
 
-        public static List<FormattedVideo> ToFormattedVideos(this List<Video> videos, User curUser)
+        public static List<FormattedVideo> ToFormattedVideos(this List<Video> videos, User curUser = null)
         {
             List<FormattedVideo> fv = new List<FormattedVideo>();
             foreach (var v in videos)
@@ -162,6 +163,28 @@ namespace VideoStreamingService.Data.ViewModels
                 fv.Add(new FormattedVideo(v, curUser));
             }
             return fv;
+        }
+        
+        public static void Set<T>(this ISession session, string key, T value)
+        {
+            session.SetString(key, JsonSerializer.Serialize<T>(value));
+        }
+ 
+        public static T? Get<T>(this ISession session, string key)
+        {
+            var value = session.GetString(key);
+            return value == null ? default(T) : JsonSerializer.Deserialize<T>(value);
+        }
+        public static bool Get<T>(this ISession session, string key, out T res)
+        {
+            var value = session.GetString(key);
+            if (value != null)
+            {
+                res = JsonSerializer.Deserialize<T>(value);
+                return true;
+            }
+            res = default(T);
+            return false;
         }
     }
 }

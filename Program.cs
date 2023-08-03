@@ -12,21 +12,23 @@ builder.Services.AddControllersWithViews();
 string connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 // SQL=>C# и обратно
 builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connectionString));
-
+builder.Services.AddMemoryCache();
 builder.Services.AddAuthentication(
     CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(option => option.LoginPath = "/User/Login"); 
 builder.Services.AddAuthorization();
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IVideoService, VideoService>();
 builder.Services.AddScoped<IVideoProcessingService, VideoProcessingService>();
 builder.Services.AddScoped<IUpdateDataService, UpdateDataService>();
 builder.Services.AddTransient<IAppConfig, AppConfig>();
+builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
 FFmpeg.SetExecutablesPath(Path.Combine(builder.Environment.WebRootPath, "ffmpeg"), ffmpegExeutableName: "ffmpeg");
 
 var app = builder.Build();
-
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
@@ -36,19 +38,15 @@ if (!app.Environment.IsDevelopment())
     // scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
-
+app.UseSession(); 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-
 app.UseRouting();
-
-app.UseAuthentication();
-app.UseAuthorization();
-
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}");
 app.MapControllerRoute(name: "channel_route",
                            pattern: "{controller=Channel}/{action=Index}/{id?}");
-
+app.UseAuthentication();
+app.UseAuthorization();
 app.Run();

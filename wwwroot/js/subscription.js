@@ -1,5 +1,7 @@
-﻿window.onload = () => {
-	buttons = document.getElementsByTagName("button");
+﻿window.onload += toggleAllButtons();
+
+function toggleAllButtons(){
+	let buttons = document.getElementsByTagName("button");
 	for (let i = 0; i < buttons.length; i++) {
 		if (buttons[i].classList.contains('sub-btn')) {
 			buttons[i].onclick = changeSubscription;

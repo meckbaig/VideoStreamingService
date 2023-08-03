@@ -3,19 +3,21 @@ using Xabe.FFmpeg;
 
 namespace VideoStreamingService.Data
 {
-    public interface IAppConfig 
+    public interface IAppConfig : IBasicClass
     {
         string UrlChars { get; }
         int VideosOnPage { get; }
         int MaxVideoPages { get; }
         string DefaultProfilePicture { get; }
         int DefaultUrlLength { get; }
+        int PagesInChunk { get; }
+        bool UseGpu { get; }
         VideoCodec VideoCodec { get; }
         void UpdateAppSetting(string key, string value);
         void UpdateAppSettings(List<string> keys, List<string> values);
     }
 
-    public class AppConfig : IAppConfig
+    public class AppConfig : BasicClass, IAppConfig
     {
         readonly IConfiguration _config;
 
@@ -30,6 +32,8 @@ namespace VideoStreamingService.Data
         public int MaxVideoPages => Convert.ToInt32(_config["AppConfig:" + nameof(MaxVideoPages)]);
         public string DefaultProfilePicture => _config["AppConfig:" + nameof(DefaultProfilePicture)];
         public int DefaultUrlLength => Convert.ToInt32(_config["AppConfig:" + nameof(DefaultUrlLength)]);
+        public int PagesInChunk => Convert.ToInt32(_config["AppConfig:" + nameof(PagesInChunk)]);
+        public bool UseGpu => _config["AppConfig:" + nameof(UseGpu)].ToLower() == "true" ? true : false;
 
         public void UpdateAppSetting(string key, string value)
         {

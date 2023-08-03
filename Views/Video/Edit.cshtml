@@ -15,18 +15,7 @@
 
 <script type="text/javascript">
 	window.onload = () => {
-        for (let i = 0; i < 3; i++) {
-            //var name = "tn"+i;
-            //var rb = document.getElementById(name);
-            //var source = "\\Videos\\@Model?.Url\\"+i+".jpg";
-            //rb.setAttribute("src", source);
-            //if (i == @Model.Thumbnail){
-            //    rb.checked = true;
-            //}
-        }
-		
             var video = document.getElementById('templateVideoPlayer'); 
             video.setAttribute("src", "/api/FileApi/GetVideo?url=@Model.Url&quality=240")
-        
 	}
 </script>
