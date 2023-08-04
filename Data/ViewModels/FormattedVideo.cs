@@ -14,16 +14,7 @@ namespace VideoStreamingService.Data.ViewModels
         public DateTime ViewDate { get; set; }
         public string ViewDateString { get; set; }
         public float? SorensenDiceCoefficient { get; set; }
-
         public bool? Like { get; set; }
-
-        //public FormattedVideo()
-        //{
-        //    ResolutionString = $"{Resolution}p";
-        //    AddLength();
-        //    AddViewsCount();
-        //    UploadDateString = Uploaded.ToString("D");
-        //}
 
         public FormattedVideo(Video video, User? curUser = null)
         {
@@ -32,8 +23,6 @@ namespace VideoStreamingService.Data.ViewModels
             AddLength();
             AddViewsCount();
             UploadDateString = video.Uploaded.ToString("D");
-
-
             if (curUser != null)
                 AddUserRelatedInformation(curUser);
         }
@@ -65,8 +54,7 @@ namespace VideoStreamingService.Data.ViewModels
                         this[prop.Name] = video[prop.Name];
                 }
                 catch (TargetParameterCountException)
-                {
-                }
+                { }
             }
         }
 
@@ -98,6 +86,7 @@ namespace VideoStreamingService.Data.ViewModels
                 return Statics.LongDescription(ViewsCount, "просмотр");
             return "";
         }
+        
         public string LongSubsString()
         {
             long subs = User.Subscribers.Count;

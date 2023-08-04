@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Win32;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -20,24 +19,34 @@ namespace VideoStreamingService.Data.Services
 			_config = appConfig;
 		}
 
-		public string NameByUrl(string url)
+		public User GetUserFromSession(ref ISession session, string userUrl = null)
 		{
-			try
+			User curUser = session.Get<User>("CurUser");
+			if (curUser == null & userUrl != null)
 			{
-				User user = _context.Users.FirstOrDefault
-					(u => u.Url == url);
-				return user?.Name;
+				curUser = GetUserByUrlAsync(userUrl).Result;
+				foreach (var prop in typeof(User).GetProperties())
+				{
+					if (prop.PropertyType.ToString().Contains("Generic.List"))
+						curUser[prop.Name] = null;
+				}
+				session.Set("CurUser", curUser);
 			}
-			catch (Exception)
-			{
-				return null;
-			}
+			return curUser;
 		}
 
 		public async Task<User> GetUserByEmailAsync(string email)
 		{
 			return await _context.Users.Include(u => u.Role)
 				.FirstOrDefaultAsync(u => u.Email == email);
+		}
+		
+		public async Task<User> GetUserByUrlAsync(string userUrl)
+		{
+			return await _context.Users
+				.Include(u => u.Subscriptions)
+				.Include(u => u.Role)
+				.FirstOrDefaultAsync(u => u.Url == userUrl);
 		}
 
 		public async Task<User> GetChannelByUrlAsync(string userUrl)
@@ -50,7 +59,6 @@ namespace VideoStreamingService.Data.Services
 
 		public async Task<List<User>> GetSubscriptions(string userUrl)
 		{
-
 			return _context.Users
 				.Include(u => u.Subscriptions)
 				.ThenInclude(s => s.ToUser)
@@ -58,14 +66,6 @@ namespace VideoStreamingService.Data.Services
 				.FirstOrDefault(u => u.Url == userUrl)
 				.Subscriptions.Select(s => s.ToUser)
 				.OrderByDescending(u => u.Name).ToList();
-		}
-
-		public async Task<User> GetUserByUrlAsync(string userUrl)
-		{
-			return await _context.Users
-				.Include(u => u.Subscriptions)
-				.Include(u => u.Role)
-				.FirstOrDefaultAsync(u => u.Url == userUrl);
 		}
 
 		public async Task ChangeSubscription(string channelUrl, string curUserUrl, bool? value = null)
@@ -91,10 +91,9 @@ namespace VideoStreamingService.Data.Services
 				_context.Subscriptions.Add(curSub);
 			}
 			_context.SaveChanges();
-
-			StringBuilder dbgmsg = new StringBuilder($"Подписка {curUser.Name} на {channel.Name} изменена ({value})");
-			dbgmsg.Replace("()", "(удалена)");
-			Debug.WriteLine(dbgmsg.ToString());
+			StringBuilder debugString = new StringBuilder($"Подписка {curUser.Name} на {channel.Name} изменена ({value})");
+			debugString.Replace("()", "(удалена)");
+			Debug.WriteLine(debugString.ToString());
 		}
 
 		public async Task CreateUserAsync(User user, string password)
@@ -148,11 +147,6 @@ namespace VideoStreamingService.Data.Services
 			_context.SaveChanges();
 		}
 
-		public async Task<string> GetTheme(string userUrl)
-		{
-			return _context.Users.FirstOrDefault(u => u.Url == userUrl)?.Theme;
-		}
-
 		public async Task SaveScreenWidth(string userUrl, bool wide)
 		{
 			_context.Users.FirstOrDefault(u => u.Url == userUrl).WideVideo = wide;
@@ -164,10 +158,8 @@ namespace VideoStreamingService.Data.Services
 			await using var originalStream = new MemoryStream();
 			await using var squaredStream = new MemoryStream();
 			await file.CopyToAsync(originalStream);
-
 			Bitmap bitmap = new Bitmap(originalStream);
 			new Bitmap(bitmap, new Size(128, 128)).Save(squaredStream, ImageFormat.Jpeg);
-
 			byte[] byteImage = squaredStream.ToArray();
 			string imgBase64 = Convert.ToBase64String(byteImage);
 			if (userUrl != null)

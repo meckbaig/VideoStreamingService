@@ -1,8 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using Newtonsoft.Json.Linq;
 using System.Text.Json;
-using Microsoft.Data.SqlClient;
 using VideoStreamingService.Data.Services;
 using VideoStreamingService.Data.ViewModels;
 using VideoStreamingService.Models;

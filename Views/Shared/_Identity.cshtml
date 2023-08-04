@@ -1,6 +1,9 @@
 ﻿@using VideoStreamingService.Controllers;
 @using VideoStreamingService.Data.Services
+@using VideoStreamingService.Data.ViewModels
+@using Microsoft.AspNetCore.Mvc.TagHelpers
 @inject IUserService UserService;
+@inject IHttpContextAccessor Accessor
 
 @if (!User.Identity.IsAuthenticated)
 {
@@ -10,7 +13,9 @@
 }
 else
 {
-    User curUser = await UserService.GetUserByUrlAsync(User.Identity.Name);
+    ISession session = Accessor.HttpContext.Session;
+    User CurUser = UserService.GetUserFromSession(ref session, User.Identity.Name);
+    // User curUser = await UserService.GetUserByUrlAsync(User.Identity.Name);
 	@*User profile section*@
     <div class="d-flex align-items-end flex-row flex-nowrap gap-2 mw-100">
         <div class="d-none d-lg-flex">
@@ -19,7 +24,8 @@ else
         <div class="dropdown">
             <button id="userButton" class="btn btn-outline-success dropdown-toggle crop-text-1" type="button" data-bs-toggle="dropdown"
                     aria-expanded="false" aria-haspopup="true" style="max-width: 160px">
-                @Context.Request.Cookies["UserName"]
+                @* @Context.Request.Cookies["UserName"] *@
+                @CurUser.Name
             </button>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profile-dropdown">
                 <li class="d-flex d-lg-none">
@@ -42,7 +48,7 @@ else
                         </button>
                     </form>
                 </li>
-                @if (curUser?.Role == RoleEnum.Developer)
+                @if (CurUser?.Role == RoleEnum.Developer)
                 {
                     <li>
                         <form class="dropdown-item" method="get" asp-controller="Developer" asp-action="Configuration">
@@ -75,9 +81,6 @@ else
         </div>
     </div>
     <script type="text/javascript">
-		
-
-		
 		function changeTheme(event) {
 			document.documentElement.setAttribute("data-bs-theme", event.currentTarget.id);
 			$.ajax({

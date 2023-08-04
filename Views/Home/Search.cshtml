@@ -1,13 +1,10 @@
 @using VideoStreamingService.Data;
-@using static System.IO.Path;
 @using VideoStreamingService.Data.ViewModels;
-@using VideoStreamingService.Data.Services;
 @inject IAppConfig config;
 @model SearchVM;
 @{
     ViewData["Title"] = "Поиск";
     ViewData["FeedType"] = Statics.FeedTypeEnum.Search.ToString();
-    
 }
 
 <div class="container-fluid my-4 col-12 col-lg-8 col-xl-7 col-xxl-6" style="max-width:900px">

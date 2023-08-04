@@ -1,16 +1,9 @@
-﻿using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using System.Diagnostics;
-using System.Security.Claims;
+﻿using Microsoft.AspNetCore.Mvc;
 using VideoStreamingService.Data;
 using VideoStreamingService.Data.Services;
 using VideoStreamingService.Data.ViewModels;
 using VideoStreamingService.Models;
-using System;
 using System.Text.Json;
-using Microsoft.VisualBasic;
 
 namespace VideoStreamingService.Controllers
 {
@@ -18,28 +11,28 @@ namespace VideoStreamingService.Controllers
     {
         private readonly IUserService _userService;
         private readonly ILogger<HomeController> _logger;
-        private readonly IVideoService _videoService;
         private readonly IUpdateDataService _updateDataService;
         private readonly IAppConfig _config;
+        private ISession _session;
 
-        public HomeController(IUserService userService, ILogger<HomeController> logger, IVideoService videoService,
-            IUpdateDataService updateDataService, IAppConfig appConfig)
+        public HomeController(IUserService userService, ILogger<HomeController> logger,
+            IUpdateDataService updateDataService, IAppConfig appConfig, IHttpContextAccessor accessor)
         {
             _userService = userService;
             _logger = logger;
-            _videoService = videoService;
             _updateDataService = updateDataService;
             _config = appConfig;
+            _session = accessor.HttpContext.Session;
         }
-
+        
         public async Task<IActionResult> Index()
         {
+            User curUser = _userService.GetUserFromSession(ref _session, User.Identity.Name);
             FeedVM feedVM = new FeedVM()
             {
                 FeedType = Statics.FeedTypeEnum.HomePage,
-                Videos = await _updateDataService.GetRandomVideos(_config.VideosOnPage, 1, User.Identity.Name)
+                Videos = await _updateDataService.GetRandomVideos(_config.VideosOnPage, 1, curUser)
             };
-
             return View(feedVM);
         }
 
@@ -54,8 +47,8 @@ namespace VideoStreamingService.Controllers
                 return Redirect("/");
             SubscriptionsVM subsVM = new SubscriptionsVM(
                 await _userService.GetSubscriptions(User.Identity.Name),
-                await _userService.GetUserByUrlAsync(User.Identity.Name));
-
+                //await _userService.GetUserByUrlAsync(User.Identity.Name)
+                _userService.GetUserFromSession(ref _session, User.Identity.Name));
             return View(subsVM);
         }
 
@@ -63,9 +56,10 @@ namespace VideoStreamingService.Controllers
         {
             if (!User.Identity.IsAuthenticated)
                 return Redirect("/");
+            User curUser = _userService.GetUserFromSession(ref _session, User.Identity.Name);
             FeedVM feedVM = new FeedVM()
             {
-                Videos = await _updateDataService.GetVideosHistory(_config.VideosOnPage, 1, User.Identity.Name),
+                Videos = await _updateDataService.GetVideosHistory(_config.VideosOnPage, 1, curUser),
                 FeedType = Statics.FeedTypeEnum.History
             };
             return View(feedVM);
@@ -76,27 +70,26 @@ namespace VideoStreamingService.Controllers
         {
             Enum.TryParse(data.RootElement.GetProperty("feedType").ToString(), out Statics.FeedTypeEnum feedType);
             int nextPage = Convert.ToInt32(data.RootElement.GetProperty(nameof(nextPage)).ToString());
-            
+            User curUser = _userService.GetUserFromSession(ref _session, User.Identity.Name);
             List<FormattedVideo> videos;
             try
             {
                 switch (feedType)
                 {
                     case Statics.FeedTypeEnum.History:
-                        videos = await _updateDataService.GetVideosHistory(_config.VideosOnPage, nextPage,
-                            User.Identity.Name);
+                        videos = await _updateDataService.GetVideosHistory(_config.VideosOnPage, nextPage, curUser);
                         break;
                     case Statics.FeedTypeEnum.Library:
                         int daysTake = Convert.ToInt32(data.RootElement.GetProperty("daysTake").ToString());
                         int daysSkip = Convert.ToInt32(data.RootElement.GetProperty("daysSkip").ToString());
                         videos = await _updateDataService.GetLastVideos(daysTake, daysSkip,
-                            _config.VideosOnPage, nextPage, User.Identity.Name);
+                            _config.VideosOnPage, nextPage, curUser);
                         break;
                     case Statics.FeedTypeEnum.HomePage:
                         List<string> urlsList = (JsonSerializer
                             .Deserialize<string[]>(data.RootElement.GetProperty("urlsArr")) ?? Array.Empty<string>()).ToList();
                         videos = await _updateDataService.GetRandomVideos(_config.VideosOnPage, nextPage,
-                            User.Identity.Name, urlsList);
+                            curUser, urlsList);
                         break;
                     case Statics.FeedTypeEnum.Search:
                         string searchString = data.RootElement.GetProperty(nameof(searchString)).ToString();
@@ -114,7 +107,7 @@ namespace VideoStreamingService.Controllers
                             visibilitiesArr[i] = (VideoVisibilityEnum)Enum.Parse(typeof(VideoVisibilityEnum), visibilitiesStringsArr[i]);
                         }
                         videos = await _updateDataService.GetChannelVideos(_config.VideosOnPage, nextPage,
-                            visibilitiesArr.Length == 0 ? null : visibilitiesArr, User.Identity.Name, channelUrl);
+                            visibilitiesArr.Length == 0 ? null : visibilitiesArr, curUser, channelUrl);
                         break;
                     default:
                         videos = new List<FormattedVideo>();
@@ -127,7 +120,6 @@ namespace VideoStreamingService.Controllers
                 TempData["Error"] = "Произошла ошибка при получении данных с сервера.";
                 throw;
             }
-
             FeedVM feedVM = new FeedVM()
             {
                 Videos = videos,
@@ -145,7 +137,6 @@ namespace VideoStreamingService.Controllers
             SearchVM searchVM =
                 await _updateDataService.GetSearchResults(_config.VideosOnPage / 2, 1, searchString,
                     User.Identity.Name);
-
             return View(searchVM);
         }
 
@@ -153,8 +144,9 @@ namespace VideoStreamingService.Controllers
         {
             if (!User.Identity.IsAuthenticated)
                 return Redirect("/");
-            List<FormattedVideo> videos =
-                await _updateDataService.GetLastVideos(1, 0, _config.VideosOnPage, 1, User.Identity.Name);
+            User curUser = _userService.GetUserFromSession(ref _session, User.Identity.Name);
+            List<FormattedVideo> videos = await _updateDataService.GetLastVideos(
+                1, 0, _config.VideosOnPage, 1, curUser);
             FeedVM feedVM = new FeedVM()
             {
                 FeedType = Statics.FeedTypeEnum.Library,
@@ -168,8 +160,14 @@ namespace VideoStreamingService.Controllers
         {
             int daysTake = Convert.ToInt32(data.RootElement.GetProperty("daysTake").ToString());
             int daysSkip = Convert.ToInt32(data.RootElement.GetProperty("daysSkip").ToString());
+            User curUser = _userService.GetUserFromSession(ref _session, User.Identity.Name);
+            if (curUser == null)
+            {
+                TempData["Error"] = "Ошибка при получении пользователя";
+                return Problem(title: "Ошибка при получении пользователя");
+            }
             List<FormattedVideo> videos =
-                await _updateDataService.GetLastVideos(daysTake, daysSkip, _config.VideosOnPage, 1, User.Identity.Name);
+                await _updateDataService.GetLastVideos(daysTake, daysSkip, _config.VideosOnPage, 1, curUser);
             FeedVM feedVM = new FeedVM()
             {
                 FeedType = Statics.FeedTypeEnum.Library,

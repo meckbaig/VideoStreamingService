@@ -9,16 +9,14 @@ namespace VideoStreamingService.Controllers
 {
 	public class ChannelController : Controller
 	{
-		private readonly IVideoService _videoService;
         private readonly IUserService _userService;
         private readonly IUpdateDataService _updateDataService;
         private readonly IAppConfig _config;
-        private readonly ISession _session;
+        private ISession _session;
 
-        public ChannelController(IVideoService videoService, IUserService userService,
-            IUpdateDataService updateDataService, IAppConfig appConfig, IHttpContextAccessor accessor)
+        public ChannelController(IUserService userService, IUpdateDataService updateDataService, 
+	        IAppConfig appConfig, IHttpContextAccessor accessor)
 		{
-			_videoService = videoService;
 			_userService = userService;
             _updateDataService = updateDataService;
             _config = appConfig;
@@ -38,9 +36,11 @@ namespace VideoStreamingService.Controllers
             }
 			UserChannel channelVM = new UserChannel(
 				channel,
-                await _userService.GetUserByUrlAsync(User.Identity.Name),
-                await _updateDataService.GetVideosAsync(_config.VideosOnPage, 1, false, 
-                    new []{ VideoVisibilityEnum.Visible }, url));
+                // await _userService.GetUserByUrlAsync(User.Identity.Name),
+                _userService.GetUserFromSession(ref _session, User.Identity.Name)
+                // await _updateDataService.GetVideosAsync(_config.VideosOnPage, 1, false, 
+                //     new []{ VideoVisibilityEnum.Visible }, url)
+				);
             return View(channelVM);
         }
 

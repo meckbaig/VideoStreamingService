@@ -14,7 +14,7 @@
 				</a>
 				<div>
 					<a class="h4 text-decoration-none crop-text-1 text-reset" href="~/@c.Url">@c.Name</a>
-					@if (!c.OwnChanel)
+					@if (!c.OwnChanel && User.Identity.IsAuthenticated)
 					{
 						<button channelUrl="@c.Url" subed="@c.Subed.ToString().ToLower()"
 							class="btn btn-success sub-btn mb-2" style="width:190px;">

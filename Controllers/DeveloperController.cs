@@ -72,8 +72,7 @@ public class DeveloperController : Controller
                 }
             }
             catch (Exception)
-            {
-            }
+            { }
         }
         _config.UpdateAppSettings(keys, values);
         return _session.Get("LastPage", out string page) ? Redirect(page) : Redirect("/");

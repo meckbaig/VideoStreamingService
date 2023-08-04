@@ -14,15 +14,13 @@ namespace VideoStreamingService.Controllers
     {
         private readonly IWebHostEnvironment _webEnvironment;
         private readonly IUserService _userService;
-        private readonly IVideoService _videoService;
         private readonly IVideoProcessingService _videoProcessingService;
 
-        public FileApiController(IWebHostEnvironment _environment, IUserService userService, IVideoService videoService,
+        public FileApiController(IWebHostEnvironment environment, IUserService userService, 
             IVideoProcessingService videoProcessingService)
         {
-            _webEnvironment = _environment;
+            _webEnvironment = environment;
             _userService = userService;
-            _videoService = videoService;
             _videoProcessingService = videoProcessingService;
         }
 
@@ -70,7 +68,7 @@ namespace VideoStreamingService.Controllers
             string image = await _userService.ChangeProfilePicture(file, User.Identity.Name);
             return Ok(image);
         }
-        
+
         [Route("UploadDefaultProfilePicture")]
         [HttpPost]
         [RequestFormLimits(MultipartBodyLengthLimit = 2200000000)]
@@ -79,8 +77,7 @@ namespace VideoStreamingService.Controllers
             string image = await _userService.ChangeProfilePicture(file);
             return Ok(image);
         }
-        
-        
+
         [Route("GetVideo")]
         public async Task<FileResult> GetVideo()
         {
@@ -90,7 +87,6 @@ namespace VideoStreamingService.Controllers
                 url = HttpContext.Request.Query[nameof(url)];
             if (!String.IsNullOrEmpty(HttpContext.Request.Query[nameof(quality).ToString()]))
                 quality = HttpContext.Request.Query[nameof(quality)];
-
             string path = Path.Combine(_webEnvironment.WebRootPath, "Videos", url);
             string input = Path.Combine(path, quality + ".mp4");
             if (quality == "")
@@ -98,7 +94,6 @@ namespace VideoStreamingService.Controllers
                 short res = await _videoProcessingService.GetMaxResolution(path);
                 input = Path.Combine(path, res + ".mp4");
             }
-
             Debug.WriteLine($"streaming {Path.GetFileNameWithoutExtension(input)}");
             return PhysicalFile(input, "application/octet-stream", enableRangeProcessing: true);
         }

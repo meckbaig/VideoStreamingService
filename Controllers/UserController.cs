@@ -23,24 +23,25 @@ namespace VideoStreamingService.Controllers
             _session = accessor.HttpContext.Session;
         }
 
-        [HttpPost]
-        public async Task<string> GetUserName()
-        {
-            if (User.Identity.IsAuthenticated)
-            {
-                string name = _userService.NameByUrl(User.Identity.Name);
-                if (name != null)
-				    ViewData["UserName"] = name;
-                else
-			        await HttpContext.SignOutAsync();
-                return name;
-            }
-            return null;
-        }
+        // [HttpPost]
+        // public async Task<string> GetUserName()
+        // {
+        //     if (User.Identity.IsAuthenticated)
+        //     {
+        //         string name = _userService.NameByUrl(User.Identity.Name);
+        //         if (name != null)
+				    // ViewData["UserName"] = name;
+        //         else
+			     //    await HttpContext.SignOutAsync();
+        //         return name;
+        //     }
+        //     return null;
+        // }
 
         public async Task<IActionResult> Logout()
         {
 			await HttpContext.SignOutAsync();
+            _session.Remove("CurUser");
             return _session.Get("LastPage", out string page) ? Redirect(page) : Redirect("/");
         }
 
@@ -76,6 +77,7 @@ namespace VideoStreamingService.Controllers
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity));
             Response.Cookies.Append("UserName", user.Name);
             Response.Cookies.Append("Theme", user.Theme);
+            _session.Remove("CurUser");
             if (string.IsNullOrEmpty(Request.Cookies["LastPage"]))
                 return Redirect("/");
             return Redirect(Request.Cookies["LastPage"]);
@@ -108,6 +110,7 @@ namespace VideoStreamingService.Controllers
             };
             ClaimsIdentity claimsIdentity = new ClaimsIdentity(claims, "Cookies");
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity));
+            _session.Remove("CurUser");
             return _session.Get("LastPage", out string page) ? Redirect(page) : Redirect("/");
         }
 

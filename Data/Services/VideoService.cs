@@ -25,6 +25,7 @@ namespace VideoStreamingService.Data.Services
 
         public async Task<Video> CreateVideo(ClaimsPrincipal principal)
         {
+            User user = await _userService.GetUserByUrlAsync(principal.Identity.Name);
             Video video = new Video();
 
             string url = "";
@@ -35,15 +36,12 @@ namespace VideoStreamingService.Data.Services
                 {
                     url += _config.UrlChars[new Random().Next(0, _config.UrlChars.Length)];
                 }
-
                 if (await VideoByUrlMinInfoAsync(url) == null)
                     unique = true;
                 else
                     url = "";
             }
-
             video.Url = url;
-            User user = await _userService.GetUserByUrlAsync(principal.Identity.Name);
             video.UserId = user.Id;
             return video;
         }
@@ -54,7 +52,6 @@ namespace VideoStreamingService.Data.Services
             {
                 if (ct.IsCancellationRequested)
                     return false;
-                //video.Visibility = _context.VideoVisibility.FirstOrDefault(v => v.Name == ((VideoVisibilityEnum)video.VisibilityId).ToString());
                 Video _video = _context.Videos.FirstOrDefault(v => v.Url == video.Url);
                 if (_video == null)
                     _context.Videos.Add(video);
@@ -79,7 +76,6 @@ namespace VideoStreamingService.Data.Services
                         }
                     }
                 }
-
                 _context.SaveChanges();
                 Debug.Print($"{video.Url} saved");
                 return true;
@@ -97,13 +93,11 @@ namespace VideoStreamingService.Data.Services
             {
                 if (ct.IsCancellationRequested)
                     return;
-                //video.Visibility = _context.VideoVisibility.FirstOrDefault(v => v.Name == ((VideoVisibilityEnum)video.VisibilityId).ToString());
                 Video _video = _context.Videos.FirstOrDefault(v => v.Url == video.Url);
                 foreach (var prop in props)
                 {
                     _video[prop] = video[prop];
                 }
-
                 _context.SaveChanges();
                 Debug.Print($"{video.Url} saved");
             }
@@ -185,7 +179,6 @@ namespace VideoStreamingService.Data.Services
                     .Include(v => v.Views)
                     .Include(v => v.Visibility)
                     .AsNoTracking().FirstOrDefaultAsync(v => v.Url == url);
-
                 //var comments = _context.Comments.ToList();
                 //List<Comment> comments = _context.Comments.FromSqlRaw($"SELECT * FROM COMMENTS WHERE VideoUrl = '{url}'").ToHashSet().ToList();
 
@@ -221,7 +214,6 @@ namespace VideoStreamingService.Data.Services
                 };
                 _context.Views.Add(view);
             }
-
             _context.SaveChanges();
         }
 
@@ -251,7 +243,6 @@ namespace VideoStreamingService.Data.Services
                 };
                 _context.Reactions.Add(newReaction);
             }
-
             _context.SaveChanges();
             Debug.WriteLine($"Реакция {reaction} в состоянии {doneUndone}");
         }
@@ -271,7 +262,6 @@ namespace VideoStreamingService.Data.Services
             {
                 message = message.Replace("  ", " ");
             }
-
             Comment comment = new Comment
             {
                 Video = video,
@@ -292,7 +282,6 @@ namespace VideoStreamingService.Data.Services
                 {
                     message = message.Replace("  ", " ");
                 }
-
                 message = message.Trim();
                 string sql =
                     $"UPDATE COMMENTS SET {nameof(Comment.Message)} = @message WHERE {nameof(Comment.Id)} = {commentId}";

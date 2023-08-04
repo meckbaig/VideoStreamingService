@@ -38,8 +38,8 @@ namespace VideoStreamingService.Data.ViewModels
             else
                 Ignored = true;
 
-			if (videos != null)
-				FeedVM.Videos = videos.ToFormattedVideos(curUser);
+			// if (videos != null)
+			// 	FeedVM.Videos = videos.ToFormattedVideos(curUser);
 		}
 
 		public UserChannel()

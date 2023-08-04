@@ -41,7 +41,6 @@ namespace VideoStreamingService.Data.Services
         private async Task AddResolutions(string input, string path, IMediaInfo mediaInfo, int height,
             CancellationToken ct)
         {
-            
             VideoCodec codec = _config.VideoCodec;
             await AddResolution(mediaInfo, codec, VideoSize.Fwqvga, 65536L, 20, Path.Combine(path, "240.mp4"), ct);
             File.Create(path + "\\240done").Close();
@@ -62,16 +61,14 @@ namespace VideoStreamingService.Data.Services
                 List<IStream> streams = new List<IStream>();
                 IVideoStream vStream = mediaInfo.VideoStreams.FirstOrDefault();
                 IAudioStream aStream = mediaInfo.AudioStreams.FirstOrDefault();
-
                 int h, w;
+                
                 ChangeSize(vStream, out h, out w);
-
                 if (vStream.Framerate < framerate)
                 {
                     bitrate = Convert.ToInt64(bitrate * (vStream.Framerate / framerate));
                     framerate = vStream.Framerate;
                 }
-
                 if (vStream.Bitrate < bitrate && reduceBitrate)
                     bitrate = vStream.Bitrate;
 
@@ -90,7 +87,6 @@ namespace VideoStreamingService.Data.Services
                         .SetBitrate(131072L);
                     streams.Add(audioStream);
                 }
-
                 try
                 {
                     IConversion conversion = FFmpeg.Conversions.New()
@@ -155,11 +151,10 @@ namespace VideoStreamingService.Data.Services
             Video video = await _videoService.VideoByUrlMinInfoAsync(id);
             video.Length = (short)mediaInfo.Duration.TotalSeconds;
             video.Resolution = Convert.ToInt16(Path.GetFileNameWithoutExtension(output));
-
+            
             await _videoService.SaveVideoAsync(video,
                 new CancellationTokenSource(TimeSpan.FromSeconds(10)).Token,
                 new string[] { "Length", "Resolution" });
-
             Debug.Print($"{id}: resolution updated to {video.Resolution}p");
             return video;
         }
@@ -183,18 +178,9 @@ namespace VideoStreamingService.Data.Services
                     video.Resolution = newParamsVideo.Resolution;
                 }
                 catch (Exception)
-                {
-                }
+                { }
             }
-
             return video;
-            //else if (res == 0)
-            //{
-            //	video.Visibility = VideoVisibilityEnum.Hidden;
-            //	await _videoService.SaveVideoAsync(video,
-            //		new CancellationTokenSource(TimeSpan.FromSeconds(10)).Token,
-            //		new string[] { "Visibility" });
-            //}
         }
 
         public async Task<short> GetMaxResolution(string path)
@@ -213,10 +199,8 @@ namespace VideoStreamingService.Data.Services
                     }
                 }
                 catch (Exception)
-                {
-                }
+                { }
             }
-
             return res;
         }
 
@@ -225,7 +209,6 @@ namespace VideoStreamingService.Data.Services
             if (ct.IsCancellationRequested)
                 return;
             IVideoStream vstream = mediaInfo.VideoStreams.FirstOrDefault().SetCodec(VideoCodec.jpeg2000);
-
             double frame = vstream.Duration.TotalMilliseconds * 0.1;
             for (int i = 0; i < 3; i++)
             {
@@ -238,7 +221,6 @@ namespace VideoStreamingService.Data.Services
                 await conversion.Start();
                 frame += vstream.Duration.TotalMilliseconds * 0.3;
             }
-
             Debug.WriteLine($"Previews done");
         }
 
@@ -259,8 +241,7 @@ namespace VideoStreamingService.Data.Services
                 image.Save(path, ImageFormat.Jpeg);
             }
             catch (Exception)
-            {
-            }
+            { }
         }
     }
 }
