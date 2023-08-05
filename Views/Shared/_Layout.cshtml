@@ -6,7 +6,7 @@
     if (!page.Contains("/Video/Upload")
         && !page.Contains("/Video/Edit")
         && !page.Contains("/Developer/Configuration")
-        && !page.Contains("/User/Edit"))
+        && !page.Contains("/User"))
         Accessor.HttpContext.Session.Set<string>("LastPage", page);
 }
 <!DOCTYPE html>
@@ -50,13 +50,12 @@
                         <button class="btn btn-outline-secondary" onclick="searchClick()" id="searchButton">🔎</button>
                     </div>
             </div>
-                    <partial name="_Identity.cshtml"/>
-
+            <partial name="_Identity.cshtml"/>
         </div>
     </nav>
 </header>
 <div class="container-fluid position-relative">
-    <main id="main" role="main" class="pb-3 pt-5 mt-2">
+    <main id="main" role="main" class="pb-3 mt-5 pt-2">
         @RenderBody()
         @if (TempData["Error"] != null)
         {

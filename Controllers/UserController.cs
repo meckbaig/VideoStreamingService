@@ -1,11 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authorization.Infrastructure;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Diagnostics;
 using System.Security.Claims;
 using System.Text.Json;
+using Microsoft.AspNetCore.Authentication.Google;
 using VideoStreamingService.Data.Services;
 using VideoStreamingService.Data.ViewModels;
 using VideoStreamingService.Models;
@@ -22,22 +21,70 @@ namespace VideoStreamingService.Controllers
             _userService = userService;
             _session = accessor.HttpContext.Session;
         }
+        
+        public IActionResult GoogleLogin()
+        {
+            var properties = new AuthenticationProperties { RedirectUri = Url.Action("GoogleResponse") };
 
-        // [HttpPost]
-        // public async Task<string> GetUserName()
-        // {
-        //     if (User.Identity.IsAuthenticated)
-        //     {
-        //         string name = _userService.NameByUrl(User.Identity.Name);
-        //         if (name != null)
-				    // ViewData["UserName"] = name;
-        //         else
-			     //    await HttpContext.SignOutAsync();
-        //         return name;
-        //     }
-        //     return null;
-        // }
+            return Challenge(properties, GoogleDefaults.AuthenticationScheme);
+        }
 
+        public async Task<IActionResult> GoogleResponse()
+        {
+            var result = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            if (!result.Succeeded)
+                return _session.Get("LastPage", out string page) ? Redirect(page) : Redirect("/");
+            var claimsIdentities = result.Principal.Identities.FirstOrDefault()
+                .Claims.Select(claim => new
+                {
+                    claim.Issuer,
+                    claim.OriginalIssuer,
+                    claim.Type,
+                    claim.Value
+                });
+            Dictionary<string, string> claimsDictionary = new Dictionary<string, string>();
+            foreach (var claim in claimsIdentities)
+            {
+                claimsDictionary.Add(Path.GetFileName(claim.Type), claim.Value);
+            }
+            
+            User user = await _userService.GetUserByEmailAsync(claimsDictionary["emailaddress"]);
+            // if (user != null)
+            // {
+            //     if (!_userService.PasswordMatches(user, claimsDictionary["nameidentifier"]))
+            //     {
+            //         TempData["Error"] = "Электронная почта уже используется";
+            //         return RedirectToAction("Logout");
+            //         return _session.Get("LastPage", out string page) ? Redirect(page) : Redirect("/");
+            //     }
+            // }
+            if (user == null)
+            {
+                user = new User
+                {
+                    Email = claimsDictionary["emailaddress"],
+                    Name = claimsDictionary["name"],
+                    EmailConfirmed = true
+                };
+                await _userService.CreateUserAsync(user, claimsDictionary["nameidentifier"]);
+                user = await _userService.GetUserByEmailAsync(claimsDictionary["emailaddress"]);
+            }
+            
+            await HttpContext.SignOutAsync();
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, user.Url),
+                new Claim(ClaimTypes.Role, user.Role.Name)
+            };
+            ClaimsIdentity claimsIdentity = new ClaimsIdentity(claims, "Cookies");
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
+                new ClaimsPrincipal(claimsIdentity));
+            Response.Cookies.Append("Theme", user.Theme);
+            _session.Remove("CurUser");
+            return _session.Get("LastPage", out string page1) ? Redirect(page1) : Redirect("/");
+        }
+        
+        [HttpPost]
         public async Task<IActionResult> Logout()
         {
 			await HttpContext.SignOutAsync();
@@ -54,8 +101,8 @@ namespace VideoStreamingService.Controllers
         [HttpPost]
         public async Task<IActionResult> Login(LoginVM logVM)
         {
-            if (!ModelState.IsValid) return View(logVM);
-
+            if (!ModelState.IsValid) 
+                return View(logVM);
             User user = await _userService.GetUserByEmailAsync(logVM.Email);
             if (user == null)
             {
@@ -67,7 +114,6 @@ namespace VideoStreamingService.Controllers
                 TempData["Error"] = "Неверный пароль";
                 return View(logVM);
             }
-
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.Name, user.Url),
@@ -75,12 +121,9 @@ namespace VideoStreamingService.Controllers
             };
             ClaimsIdentity claimsIdentity = new ClaimsIdentity(claims, "Cookies");
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity));
-            Response.Cookies.Append("UserName", user.Name);
             Response.Cookies.Append("Theme", user.Theme);
             _session.Remove("CurUser");
-            if (string.IsNullOrEmpty(Request.Cookies["LastPage"]))
-                return Redirect("/");
-            return Redirect(Request.Cookies["LastPage"]);
+            return _session.Get("LastPage", out string page) ? Redirect(page) : Redirect("/");
         }
 
         public IActionResult Registration() => View(new RegistrationVM());
@@ -106,14 +149,15 @@ namespace VideoStreamingService.Controllers
 
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.Name, user.Url)
+                new Claim(ClaimTypes.Name, user.Url),
+                new Claim(ClaimTypes.Role, user.Role.Name)
             };
             ClaimsIdentity claimsIdentity = new ClaimsIdentity(claims, "Cookies");
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity));
             _session.Remove("CurUser");
             return _session.Get("LastPage", out string page) ? Redirect(page) : Redirect("/");
         }
-
+        
         [HttpGet]
         public async Task<IActionResult> Edit()
         {
@@ -122,10 +166,10 @@ namespace VideoStreamingService.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Edit(EditUserVM editUserVM)
+        public async Task<IActionResult> SaveUser(EditUserVM editUserVM)
         {
             if (!ModelState.IsValid)
-                return View(editUserVM);
+                return View("Edit", editUserVM);
             User user = await _userService.SaveUserAsync(editUserVM, new[] { "Name", "Url" });
             await HttpContext.SignOutAsync();
             var claims = new List<Claim>
@@ -135,6 +179,19 @@ namespace VideoStreamingService.Controllers
             };
             ClaimsIdentity claimsIdentity = new ClaimsIdentity(claims, "Cookies");
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity));
+            return _session.Get("LastPage", out string page) ? Redirect(page) : Redirect("/");
+        }
+
+        public async Task<IActionResult> DeleteUser(int id, string url)
+        {
+            if (url==User.Identity.Name)
+                if (await _userService.DeleteUser(id))
+                {
+                    _session.Remove("LastPage");
+                    return await Logout();
+                }
+            
+            TempData["Error"] = "Произошла ошибка во время удаления пользователя";
             return _session.Get("LastPage", out string page) ? Redirect(page) : Redirect("/");
         }
 

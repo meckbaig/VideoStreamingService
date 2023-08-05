@@ -4,6 +4,7 @@ using VideoStreamingService.Data.Services;
 using VideoStreamingService.Data.ViewModels;
 using VideoStreamingService.Models;
 using System.Text.Json;
+using Microsoft.AspNetCore.Authorization;
 
 namespace VideoStreamingService.Controllers
 {
@@ -36,6 +37,7 @@ namespace VideoStreamingService.Controllers
             return View(feedVM);
         }
 
+        [Authorize]
         public async Task<IActionResult> Privacy()
         {
             return View();

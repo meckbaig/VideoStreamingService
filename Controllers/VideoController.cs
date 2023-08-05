@@ -57,6 +57,11 @@ namespace VideoStreamingService.Controllers
             if (!String.IsNullOrEmpty(HttpContext.Request.Query[nameof(url)]))
                 url = HttpContext.Request.Query[nameof(url)];
             Video video = await _videoService.VideoByUrlMinInfoAsync(url);
+            if (video == null)
+            {
+                TempData["Error"] = "Видео по указанному URL не найдено!";
+                return _session.Get("LastPage", out string page) ? Redirect(page) : Redirect("/");
+            }
             if (video.User.Url == User.Identity.Name || User.IsInRole(RoleEnum.Developer.ToString()))
                 return View("Edit", video);
             else
@@ -174,7 +179,6 @@ namespace VideoStreamingService.Controllers
             await _videoProcessingService.ConvertVideo(path, Statics.AddToken(url, Statics.TokenType.Upload).Token);
         }
 
-        [HttpPost]
         public async Task<IActionResult> SaveVideo(Video video)
         {
             video.Visibility = (VideoVisibilityEnum)video.VisibilityId;

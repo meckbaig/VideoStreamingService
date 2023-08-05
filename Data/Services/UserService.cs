@@ -170,6 +170,21 @@ namespace VideoStreamingService.Data.Services
 			return imgBase64;
 		}
 
+		public async Task<bool> DeleteUser(int id)
+		{
+			try
+			{
+				_context.Users.Remove(_context.Users.FirstOrDefault(u => u.Id == id));
+				await _context.SaveChangesAsync();
+				return true;
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine(ex);
+				return false;
+			}
+		}
+
 		private string Hash(string password)
 		{
 			using (SHA512 sha512Hash = SHA512.Create())

@@ -62,10 +62,11 @@ namespace VideoStreamingService.Data.Services
                         try
                         {
                             if (video[prop.Name] != null &&
-                                prop.Name != "UserId" &&
-                                prop.Name != "Uploaded" &&
-                                prop.Name != "Resolution" &&
-                                prop.Name != "Length" &&
+                                prop.Name != nameof(Video.UserId) &&
+                                prop.Name != nameof(Video.Uploaded) &&
+                                prop.Name != nameof(Video.Resolution) &&
+                                prop.Name != nameof(Video.Length) && 
+                                prop.Name != nameof(Video.Visibility) &&
                                 prop.Name != "Item")
                             {
                                 _video[prop.Name] = video[prop.Name];
@@ -75,6 +76,8 @@ namespace VideoStreamingService.Data.Services
                         {
                         }
                     }
+                    if (video.Visibility != null)
+                        _video.Visibility = _context.VideoVisibility.FirstOrDefault(v => v.Name == video.Visibility.Name);
                 }
                 _context.SaveChanges();
                 Debug.Print($"{video.Url} saved");

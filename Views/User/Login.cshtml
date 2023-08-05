@@ -21,7 +21,6 @@
             <div class="col">
                 <form asp-action="Login">@*Это куда переход*@
                     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-
                     <div class="mb-3">
                         <label asp-for="Email" class="form-label"></label>
                         <input asp-for="Email" class="form-control" maxlength="100"/>
@@ -32,9 +31,10 @@
                         <input asp-for="Password" class="form-control" maxlength="30" />
                         <span asp-validation-for="Password" class="text-danger"></span>
                     </div>
-                    <div class="mb-3">
-                        <input class="btn btn-outline-success float-right" type="submit" value="Войти" />
-                        <a class="btn btn-outline-secondary" asp-controller="User" asp-action="Registration">Регистрация</a>
+                    <div>
+                        <input class="btn btn-outline-success float-right mb-2" type="submit" value="Войти" />
+                        <a class="btn btn-outline-secondary mb-2" asp-controller="User" asp-action="Registration">Регистрация</a>
+                        <a class="btn btn-outline-primary mb-2" asp-controller="User" asp-action="GoogleLogin">Вход с помощью Google</a>
                     </div>
                 </form>
             </div>

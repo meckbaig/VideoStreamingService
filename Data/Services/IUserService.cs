@@ -18,5 +18,6 @@ namespace VideoStreamingService.Data.Services
         Task SaveScreenWidth(string userUrl, bool wide);
         Task<User> SaveUserAsync(EditUserVM user, string[] props);
         Task<string> ChangeProfilePicture(IFormFile file, string userUrl = null);
+        Task<bool> DeleteUser(int id);
     }
 }

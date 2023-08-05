@@ -1,6 +1,7 @@
 ﻿@model string
 
-<div id="alert_@(DateTime.Now.ToFileTime())" class="alert alert-warning position-absolute end-0 top-0 me-3 p-3" style="margin-top: 65px" role="alert">
+<div id="alert_@(DateTime.Now.ToFileTime())" class="alert alert-warning position-absolute 
+end-0 top-0 me-3 p-3 mt-4" role="alert">
     <b>Внимание!</b> - @Model
     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 </div>

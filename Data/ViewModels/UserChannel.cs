@@ -49,7 +49,7 @@ namespace VideoStreamingService.Data.ViewModels
 
 		public string LongSubsString()
 		{
-			long subs = Subscribers.Count;
+			long subs = Subscribers?.Count ?? 0;
 			if (subs > 1000)
 				return Statics.LongDescription(subs, "подписчик");
 			return "";
