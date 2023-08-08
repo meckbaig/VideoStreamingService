@@ -28,6 +28,7 @@
 <button id="buttonNext" class="btn btn-secondary mx-2 px-5 align-self-center" onclick="loadMore(event)">Далее</button>
 
 <script type="text/javascript">
+	document.getElementById('libraryLabel').classList.add("fw-semibold");
 	var daysDescription = ["Сутки", "Неделя", "Месяц", "2 месяца", "3 месяца", "4 месяца", "5 месяцев", "Пол года"]
 	var days = [0, 1, 7, 30, 60, 90, 120, 150, 180];
 	var i = 1;
@@ -60,6 +61,6 @@
 				refreshPages();
 			}
         });
-	}
+	}	
 </script>
 <script src="~/js/videosOnScroll.js"></script>
