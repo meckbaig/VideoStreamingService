@@ -15,7 +15,7 @@ namespace VideoStreamingService.Data.ViewModels
         {
             foreach (var user in users)
             {
-                Channels.Add(new UserChannel(user, curUser));
+                Channels.Add(new UserChannel(user, curUser?.Id));
 			}
         }
     }

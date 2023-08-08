@@ -20,6 +20,6 @@ namespace VideoStreamingService.Data.Services
         Task EditReaction(string videoId, string userUrl, bool reaction, bool doneUndone);
         Task<bool?> GetReaction(Video video, string userUrl);
         Task<Comment> AddComment(string videoUrl, string userUrl, string message);
-		Task UpdateComment(long commentId, string message);
+		Task<bool> UpdateComment(long commentId, int userId, string message);
 	}
 }

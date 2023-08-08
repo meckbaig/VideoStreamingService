@@ -13,7 +13,7 @@ namespace VideoStreamingService.Data.ViewModels
         public float? SorensenDiceCoefficient { get; set; }
         public long? MaxResults { get => Subscribers.Count; }
         public FeedVM FeedVM { get; set; } = new FeedVM() { FeedType = Statics.FeedTypeEnum.Channel };
-		public UserChannel(User user, User curUser, List<Video> videos = null)
+		public UserChannel(User user, int? curUserId, List<Video> videos = null)
 		{
 			foreach (var prop in user.GetType().GetProperties())
 			{
@@ -24,11 +24,11 @@ namespace VideoStreamingService.Data.ViewModels
 				}
 				catch (TargetParameterCountException) { }
 			}
-			if (user.Id == curUser?.Id)
+			if (user.Id == curUserId)
 				OwnChanel = true;
-			else if (curUser != null)
+			else if (curUserId != null)
 			{
-				bool? Sub_Ignore = user.Subscribers?.FirstOrDefault(s => s.FromUserId == curUser.Id)?.Sub_Ignore;
+				bool? Sub_Ignore = user.Subscribers?.FirstOrDefault(s => s.FromUserId == curUserId)?.Sub_Ignore;
 				if (Sub_Ignore != null)
 				{
 					Subed = (bool)Sub_Ignore;

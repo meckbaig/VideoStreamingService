@@ -263,12 +263,28 @@ namespace VideoStreamingService.Migrations
                     b.ToTable("Views");
                 });
 
+            modelBuilder.Entity("VideoStreamingService.Models.Wallet", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("QiwiPhoneNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("YoomoneyId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("Wallets");
+                });
+
             modelBuilder.Entity("VideoStreamingService.Models.Comment", b =>
                 {
                     b.HasOne("VideoStreamingService.Models.User", "User")
                         .WithMany("Comments")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("VideoStreamingService.Models.Video", "Video")
@@ -287,7 +303,7 @@ namespace VideoStreamingService.Migrations
                     b.HasOne("VideoStreamingService.Models.User", "User")
                         .WithMany("Reactions")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("VideoStreamingService.Models.Video", "Video")
@@ -306,13 +322,13 @@ namespace VideoStreamingService.Migrations
                     b.HasOne("VideoStreamingService.Models.User", "FromUser")
                         .WithMany("Subscriptions")
                         .HasForeignKey("FromUserId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("VideoStreamingService.Models.User", "ToUser")
                         .WithMany("Subscribers")
                         .HasForeignKey("ToUserId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("FromUser");
@@ -374,7 +390,7 @@ namespace VideoStreamingService.Migrations
                     b.HasOne("VideoStreamingService.Models.User", "User")
                         .WithMany("Views")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("VideoStreamingService.Models.Video", "Video")
@@ -386,6 +402,17 @@ namespace VideoStreamingService.Migrations
                     b.Navigation("User");
 
                     b.Navigation("Video");
+                });
+
+            modelBuilder.Entity("VideoStreamingService.Models.Wallet", b =>
+                {
+                    b.HasOne("VideoStreamingService.Models.User", "User")
+                        .WithOne("Wallet")
+                        .HasForeignKey("VideoStreamingService.Models.Wallet", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("VideoStreamingService.Models.Category", b =>
@@ -406,6 +433,9 @@ namespace VideoStreamingService.Migrations
                     b.Navigation("Videos");
 
                     b.Navigation("Views");
+
+                    b.Navigation("Wallet")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("VideoStreamingService.Models.Video", b =>

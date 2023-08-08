@@ -3,7 +3,7 @@
 @model EditUserVM;
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 @{
-	ViewData["Title"] = "Редактор";
+	ViewData["Title"] = "Редактор пользователя";
 }
 
 
@@ -23,7 +23,7 @@
 						<label asp-for="Name" class="form-label"></label>
 						<span asp-validation-for="Name"/>
 					</div>
-					<div class="form-floating">
+					<div class="form-floating mb-3">
 						<input asp-for="Url" class="form-control"/>
 						<label asp-for="Url" class="form-label"></label>
 						<span asp-validation-for="Url"/>
@@ -34,13 +34,13 @@
 				<input asp-for="Id" type="hidden">
 			</div>
 			<div class="d-flex gap-2 justify-content-center">
+				<a class="btn btn-outline-primary text-nowrap float-right" type="submit" asp-controller="Payment"
+				   asp-action="Edit">Добавить кошельки</a>
 				<input class="btn btn-outline-success float-right" type="submit" value="Сохранить" formaction="SaveUser"/>
 				<a class="btn btn-outline-danger float-right" type="submit" asp-controller="User"
 				   asp-action="DeleteUser" asp-route-id="@Model.Id" asp-route-url="@Model.Url">Удалить</a>
 			</div>
-			
 		</form>
-		
 	</div>
 </div>
 

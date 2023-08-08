@@ -75,7 +75,7 @@ namespace VideoStreamingService.Data.Services
 
         private async Task<List<UserChannel>> SearchUsersAsync(string searchText, string curUserUrl)
         {
-            User curUser = await _userService.GetUserByUrlAsync(curUserUrl);
+            int? curUserId = _context.Users.Select(u => new { u.Id, u.Url }).FirstOrDefault(u => u.Url == curUserUrl)?.Id;
             List<User> users = _context.Users.Include(u => u.Subscribers.Where(s => s.Sub_Ignore == true)).ToList();
             List<UserChannel> channels = new List<UserChannel>();
             List<Task> tasks = new List<Task>();
@@ -83,7 +83,7 @@ namespace VideoStreamingService.Data.Services
             {
                 var task = new Task(() =>
                 {
-                    UserChannel userChannel = new UserChannel(user, curUser);
+                    UserChannel userChannel = new UserChannel(user, curUserId);
                     userChannel.SorensenDiceCoefficient =
                         Statics.SorensenDiceCoefficient(searchText, userChannel.Name) * 1.01f;
                     if (userChannel.SorensenDiceCoefficient > 0)

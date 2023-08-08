@@ -43,6 +43,11 @@ function updateComment(commentId, message) {
 		}),
 		cache: false,
 		contentType: "application/json",
-		processData: false
+		processData: false,
+		statusCode: {
+			500: function(xhr) {
+				showError(xhr.responseJSON.title);
+			}
+		},
 	});
 } 

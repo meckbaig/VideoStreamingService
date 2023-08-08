@@ -30,6 +30,8 @@ builder.Services.AddScoped<IVideoService, VideoService>();
 builder.Services.AddScoped<IVideoProcessingService, VideoProcessingService>();
 builder.Services.AddScoped<IUpdateDataService, UpdateDataService>();
 builder.Services.AddTransient<IAppConfig, AppConfig>();
+builder.Services.AddTransient<IWalletsConfig, AppConfig>();
+builder.Services.AddTransient<IPaymentService, PaymentService>();
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
 FFmpeg.SetExecutablesPath(Path.Combine(builder.Environment.WebRootPath, "ffmpeg"), ffmpegExeutableName: "ffmpeg");

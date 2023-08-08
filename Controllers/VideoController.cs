@@ -127,14 +127,16 @@ namespace VideoStreamingService.Controllers
 			return PartialView("_Comment", comment);
 		}
 
-		[HttpPost]
-		public async Task<IActionResult> UpdateComment([FromBody] JsonDocument data)
-		{
-			long commentId = Convert.ToInt64(data.RootElement.GetProperty(nameof(commentId)).ToString());
-			string message = data.RootElement.GetProperty(nameof(message)).ToString();
-            await _videoService.UpdateComment(commentId, message);
-            return Ok();
-		}
+        [HttpPost]
+        public async Task<IActionResult> UpdateComment([FromBody] JsonDocument data)
+        {
+            long commentId = Convert.ToInt64(data.RootElement.GetProperty(nameof(commentId)).ToString());
+            string message = data.RootElement.GetProperty(nameof(message)).ToString();
+            if(await _videoService.UpdateComment(commentId, _session.Get<User>("CurUser").Id, message))
+                return Ok();
+            else
+                return Problem(title:"Ошибка при изменении комментария!");
+        }
 
 		[HttpPut]
 		[RequestFormLimits(MultipartBodyLengthLimit = 2200000000)]

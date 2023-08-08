@@ -18,8 +18,8 @@ else
     // User curUser = await UserService.GetUserByUrlAsync(User.Identity.Name);
 	@*User profile section*@
     <div class="d-flex align-items-end flex-row flex-nowrap gap-2 mw-100">
-        <div class="d-none d-lg-flex">
-            <a class="btn btn-outline-primary text-nowrap crop-text-1" asp-controller="Video" asp-action="Upload">+ Добавить видео</a>
+        <div class="d-none d-sm-flex d-md-none d-lg-flex">
+            <a class="btn btn-outline-primary text-nowrap crop-text-1 ps-2" asp-controller="Video" asp-action="Upload">+ Добавить видео</a>
         </div>
         <div class="dropdown">
             <button id="userButton" class="btn btn-outline-success dropdown-toggle crop-text-1" type="button" data-bs-toggle="dropdown"
@@ -28,9 +28,9 @@ else
                 @CurUser.Name
             </button>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profile-dropdown">
-                <li class="d-flex d-lg-none">
+                <li class="d-flex d-sm-none d-md-flex d-lg-none">
                     <div class="m-2 mt-0">
-                        <a class="btn btn-outline-primary text-nowrap crop-text-1" asp-controller="Video" asp-action="Upload">+ Добавить видео</a>
+                        <a class="btn btn-outline-primary text-nowrap crop-text-1 ps-2" asp-controller="Video" asp-action="Upload">+ Добавить видео</a>
                     </div>
                 </li>
                 <hr class="m-0 p-0 d-flex d-lg-none">

@@ -17,7 +17,13 @@ namespace VideoStreamingService.Data
         void UpdateAppSettings(List<string> keys, List<string> values);
     }
 
-    public class AppConfig : BasicClass, IAppConfig
+    public interface IWalletsConfig : IBasicClass
+    {
+        string DefaultYoomoneyUrl { get; }
+        string DefaultQiwiUrl { get; }
+    }
+
+    public class AppConfig : BasicClass, IAppConfig, IWalletsConfig
     {
         readonly IConfiguration _config;
 
@@ -34,7 +40,9 @@ namespace VideoStreamingService.Data
         public int DefaultUrlLength => Convert.ToInt32(_config["AppConfig:" + nameof(DefaultUrlLength)]);
         public int PagesInChunk => Convert.ToInt32(_config["AppConfig:" + nameof(PagesInChunk)]);
         public bool UseGpu => _config["AppConfig:" + nameof(UseGpu)].ToLower() == "true" ? true : false;
-
+        public string DefaultYoomoneyUrl => _config.GetFromConfig(nameof(DefaultYoomoneyUrl));
+        public string DefaultQiwiUrl => _config.GetFromConfig(nameof(DefaultQiwiUrl));
+        
         public void UpdateAppSetting(string key, string value)
         {
             var configJson = File.ReadAllText("appsettings.json");
@@ -58,6 +66,14 @@ namespace VideoStreamingService.Data
             config["AppConfig"] = appConfig;
             var updatedConfigJson = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText("appsettings.json", updatedConfigJson);
+        }
+    }
+
+    internal static class Methods
+    {
+        public static string GetFromConfig(this IConfiguration config, string propName)
+        {
+            return config["AppConfig:" + propName];
         }
     }
 }

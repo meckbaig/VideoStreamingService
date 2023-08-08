@@ -19,10 +19,11 @@ namespace VideoStreamingService.Models
         public bool EmailConfirmed { get; set; } = false;
         public bool WideVideo { get; set; } = false;
         public string Theme { get; set; } = "light";
-        public string? Image { get; set; } 
+        public string? Image { get; set; }
         public int RoleId { get; set; } = (int)RoleEnum.RegularUser;
 
 
+        public Wallet Wallet { get; set; }
         public Role Role { get; set; } = new Role();
 		public List<Video> Videos { get; set; } = new List<Video>();
         public List<Reaction> Reactions { get; set; } = new List<Reaction>();

@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="~/vime/themes/default.css" />
 	<script defer type="module" src="~/vime/dist/vime/vime.esm.js"></script>
 
-<div class="row">
+<div class="row mt-3">
 	<div class="d-flex flex-column align-items-center">
 		<div id="container" class="col-12 col-md-10 col-lg-9 col-xl-8">
 			<vm-player id="videoContainer" autoplay autopause="false">
@@ -243,15 +243,17 @@
 	}
 
 	function resizeVideo() {
-		if (wideVideoBool) {
-			var vidHeight = window.innerHeight - document.getElementById('header').offsetHeight - 28;
-		}
-		else{
-			var vidHeight = window.innerHeight * 0.9 - document.getElementById('header').offsetHeight - 130;
-			if (window.innerHeight < 600){
-				vidHeight = window.innerHeight - 20 - document.getElementById('header');
-			}
-		}
+		if (window.innerHeight < 600){
+        		var vidHeight = window.innerHeight - 20 - document.getElementById('header');
+        }
+		else {
+			if (wideVideoBool) {
+            	var vidHeight = window.innerHeight - document.getElementById('header').offsetHeight - 76;
+            }
+            else {
+            	var vidHeight = window.innerHeight * 0.9 - document.getElementById('header').offsetHeight - 130;
+            }
+		}			
 		
 		//document.getElementById('videoPlayer').style.maxHeight = vidHeight + "px";
 		var videoContainer = document.getElementById('videoContainer');

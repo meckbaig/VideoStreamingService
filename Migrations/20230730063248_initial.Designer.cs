@@ -265,6 +265,22 @@ namespace VideoStreamingService.Migrations
 
                     b.ToTable("Views");
                 });
+            
+            modelBuilder.Entity("VideoStreamingService.Models.Wallet", b =>
+            {
+                b.Property<int>("UserId")
+                    .HasColumnType("int");
+
+                b.Property<string>("QiwiPhoneNumber")
+                    .HasColumnType("nvarchar(max)");
+
+                b.Property<string>("YoomoneyId")
+                    .HasColumnType("nvarchar(max)");
+
+                b.HasKey("UserId");
+
+                b.ToTable("Wallets");
+            });
 
             modelBuilder.Entity("VideoStreamingService.Models.Comment", b =>
                 {
@@ -391,6 +407,17 @@ namespace VideoStreamingService.Migrations
                     b.Navigation("Video");
                 });
 
+            modelBuilder.Entity("VideoStreamingService.Models.Wallet", b =>
+            {
+                b.HasOne("VideoStreamingService.Models.User", "User")
+                    .WithOne("Wallet")
+                    .HasForeignKey("VideoStreamingService.Models.Wallet", "UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
+
+                b.Navigation("User");
+            });
+
             modelBuilder.Entity("VideoStreamingService.Models.Category", b =>
                 {
                     b.Navigation("Video_Categories");
@@ -409,6 +436,9 @@ namespace VideoStreamingService.Migrations
                     b.Navigation("Videos");
 
                     b.Navigation("Views");
+
+                    b.Navigation("Wallet")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("VideoStreamingService.Models.Video", b =>

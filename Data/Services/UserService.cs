@@ -46,7 +46,7 @@ namespace VideoStreamingService.Data.Services
 			return await _context.Users
 				.Include(u => u.Subscriptions)
 				.Include(u => u.Role)
-				.FirstOrDefaultAsync(u => u.Url == userUrl);
+				.AsNoTracking().FirstOrDefaultAsync(u => u.Url == userUrl);
 		}
 
 		public async Task<User> GetChannelByUrlAsync(string userUrl)
@@ -54,6 +54,7 @@ namespace VideoStreamingService.Data.Services
 			return await _context.Users
 				//.Include(u => u.Videos.OrderByDescending(v => v.Uploaded)).ThenInclude(v => v.Views)
 				.Include(u => u.Subscribers.Where(s => s.Sub_Ignore == true))
+				.Include(u => u.Wallet)
 				.FirstOrDefaultAsync(u => u.Url == userUrl);
 		}
 

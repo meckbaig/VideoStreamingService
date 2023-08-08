@@ -27,7 +27,6 @@ namespace VideoStreamingService.Data.Services
         {
             User user = await _userService.GetUserByUrlAsync(principal.Identity.Name);
             Video video = new Video();
-
             string url = "";
             bool unique = false;
             while (!unique)
@@ -174,10 +173,10 @@ namespace VideoStreamingService.Data.Services
                 Video video = await _context.Videos
                     .Include(v => v.User)
                     .ThenInclude(u => u.Subscribers)
-                    .Include(v => v.Comments
-                        .Where(c => c.VideoUrl == url)
-                        .OrderByDescending(c => c.Id))
-                    .ThenInclude(c => c.User).AsNoTracking()
+                    // .Include(v => v.Comments
+                    //     .Where(c => c.VideoUrl == url)
+                    //     .OrderByDescending(c => c.Id))
+                    //     .ThenInclude(c => c.User)
                     .Include(v => v.Reactions)
                     .Include(v => v.Views)
                     .Include(v => v.Visibility)
@@ -185,9 +184,9 @@ namespace VideoStreamingService.Data.Services
                 //var comments = _context.Comments.ToList();
                 //List<Comment> comments = _context.Comments.FromSqlRaw($"SELECT * FROM COMMENTS WHERE VideoUrl = '{url}'").ToHashSet().ToList();
 
-                // video.Comments = _context.Comments
-                //     .Include(c => c.User).AsNoTracking()
-                //     .Where(c => c.VideoUrl == url).OrderByDescending(c => c.Id).ToList();
+                video.Comments = _context.Comments
+                    .Include(c => c.User).AsNoTracking()
+                    .Where(c => c.VideoUrl == url).OrderByDescending(c => c.Id).ToList();
                 return video;
             }
             catch (Exception ex)
@@ -276,8 +275,12 @@ namespace VideoStreamingService.Data.Services
             return comment;
         }
 
-        public async Task UpdateComment(long commentId, string message)
+        public async Task<bool> UpdateComment(long commentId, int userId, string message)
         {
+            if (_context.Comments.Select(c => new{ c.Id, c.UserId })
+                    .FirstOrDefault(c => c.Id == commentId).UserId != userId)
+                return false;
+            
             if (!string.IsNullOrEmpty(message))
             {
                 message = message.Replace("\t", " ");
@@ -299,7 +302,8 @@ namespace VideoStreamingService.Data.Services
             }
             else
                 await _context.Database.ExecuteSqlAsync(
-                    $"DELETE FROM COMMENTS WHERE {nameof(Comment.Id)} = {commentId}");
+                    $"DELETE FROM COMMENTS WHERE Id = {commentId}");
+            return true;
         }
     }
 }
